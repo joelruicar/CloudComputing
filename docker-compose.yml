@@ -1,0 +1,51 @@
+services:
+  oauth2-proxy:
+    container_name: oauth2-proxy
+    image: bitnami/oauth2-proxy:latest
+    command: --config /oauth2-proxy.cfg
+    ports:
+      - 4180:4180/tcp
+    hostname: oauth2-proxy
+    volumes:
+      - "./cfg-oauth2/oauth2-proxy.cfg:/oauth2-proxy.cfg"
+    restart: unless-stopped
+    networks:
+      ccnet:
+        ipv4_address: 192.168.1.2
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak
+    command: 
+      - start-dev 
+      - --hostname=192.168.1.3
+      - --import-realm
+    ports:
+      - 8080:8080
+    environment:
+      KEYCLOAK_ADMIN: admin 
+      KEYCLOAK_ADMIN_PASSWORD: 1234
+      KEYCLOAK_IMPORT: /opt/keycloak/data/import/keycloak_export.json
+    hostname: keycloak
+    volumes:
+      - "./cfg-keycloak/keycloak_export.json:/opt/keycloak/data/import/keycloak_export.json"
+    restart: unless-stopped
+    networks:
+      ccnet:
+        ipv4_address: 192.168.1.3
+  nodejson:
+    container_name: nodejson
+    image: customnode
+    build:
+      dockerfile: node.Dockerfile
+    # ports:
+    #   - 3000:3000
+    networks:
+      ccnet:
+        ipv4_address: 192.168.1.4
+  
+networks:
+  ccnet:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.1.0/16"
