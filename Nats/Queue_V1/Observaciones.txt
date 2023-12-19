@@ -1,0 +1,28 @@
+Packages
+NODE
+	sudo apt update
+	sudo apt install npm
+	sudo npm install -g n
+	sudo n stable
+	node -v
+
+EXPRESS
+npm install express
+
+REDIS
+sudo apt-get install redis
+	validar con: redis-cli + ping(pong)
+
+CONEXION LOCAL A WSL
+Ir a Network
+Escribir en barra busqueda: \\wsl$
+
+index.js	//administra el server
+server.js	//APP con express
+queues.js	//cola con bull asociado a unos workers 
+entry-point	//Quien va a añadir desde el queue sera desde aqui
+.env		//variables de entorno
+.gitignore		//referencias
+Carpeta config		//contiene el index.js que aloja el puerto de redis,  el host donde corre redis
+				//el index exporta lo que requieran app y appIn
+
