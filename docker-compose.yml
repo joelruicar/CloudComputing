@@ -8,7 +8,9 @@ services:
     hostname: oauth2-proxy
     volumes:
       - "./cfg-oauth2/oauth2-proxy.cfg:/oauth2-proxy.cfg"
-    restart: unless-stopped
+    restart: always
+    depends_on:
+      - keycloak
     networks:
       ccnet:
         ipv4_address: 192.168.1.2
@@ -19,6 +21,8 @@ services:
       - start-dev 
       - --hostname=192.168.1.3
       - --import-realm
+    expose:
+      - "8080"
     ports:
       - 8080:8080
     environment:
@@ -28,7 +32,7 @@ services:
     hostname: keycloak
     volumes:
       - "./cfg-keycloak/keycloak_export.json:/opt/keycloak/data/import/keycloak_export.json"
-    restart: unless-stopped
+    restart: always
     networks:
       ccnet:
         ipv4_address: 192.168.1.3
@@ -37,11 +41,31 @@ services:
     image: customnode
     build:
       dockerfile: node.Dockerfile
+    restart: always
+    expose:
+      - "3000"
     # ports:
     #   - 3000:3000
     networks:
       ccnet:
         ipv4_address: 192.168.1.4
+  kv_storage:
+    container_name: postgresql
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: ccpwd
+      POSTGRES_USER: postgres
+    expose:
+      - "5432" # Publishes 5432 to other containers but NOT to host machine
+    ports:
+      - "5432:5432"
+    # command: -p 5433
+    volumes:
+      - ./cfg-postgresql:/var/lib/postgresql/data
+    user: 1000:1000 # https://stackoverflow.com/questions/56188573/permission-issue-with-postgresql-in-docker-container
+    networks:
+      ccnet:
+        ipv4_address: 192.168.1.5
   
 networks:
   ccnet:
