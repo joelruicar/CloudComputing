@@ -61,7 +61,7 @@ services:
       - "5432:5432"
     # command: -p 5433
     volumes:
-      - ./cfg-postgresql:/var/lib/postgresql/data
+      - ./postgres-data:/var/lib/postgresql/data
     user: 1000:1000 # https://stackoverflow.com/questions/56188573/permission-issue-with-postgresql-in-docker-container
     networks:
       ccnet:
