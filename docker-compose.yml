@@ -28,10 +28,11 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin 
       KEYCLOAK_ADMIN_PASSWORD: 1234
-      KEYCLOAK_IMPORT: /opt/keycloak/data/import/keycloak_export.json
+      # KEYCLOAK_IMPORT: /opt/keycloak/data/import/keycloak_export.json
     hostname: keycloak
     volumes:
-      - "./cfg-keycloak/keycloak_export.json:/opt/keycloak/data/import/keycloak_export.json"
+      - "./cfg-keycloak/:/opt/keycloak/data/import:ro"
+      # - ./test:/test
     restart: always
     networks:
       ccnet:
