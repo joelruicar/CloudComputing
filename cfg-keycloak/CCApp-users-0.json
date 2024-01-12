@@ -1,0 +1,44 @@
+{
+  "realm" : "CCApp",
+  "users" : [ {
+    "id" : "a078c6a1-b6fd-4a9d-a0de-8dfd1eac2ca6",
+    "createdTimestamp" : 1702916822533,
+    "username" : "service-account-oauth2-proxy",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : false,
+    "serviceAccountClientId" : "oauth2-proxy",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-ccapp" ],
+    "clientRoles" : {
+      "oauth2-proxy" : [ "uma_protection" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "d4b4a98f-0937-4866-ac4a-d3c6412ac2ba",
+    "createdTimestamp" : 1702915947318,
+    "username" : "usercc",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : true,
+    "firstName" : "Test",
+    "lastName" : "Testson",
+    "email" : "usercc@example.upv.es",
+    "credentials" : [ {
+      "id" : "f3a66a0d-de0d-447c-8d39-9a24ae197d41",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1702915964268,
+      "secretData" : "{\"value\":\"ulBhhEX8Z6MxqNgq0K+K35S1JLwssc6NiDOnz0zqmBs=\",\"salt\":\"mayc09uS5JCsxHFFBU1AIw==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-ccapp" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  } ]
+}
