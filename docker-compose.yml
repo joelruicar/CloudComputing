@@ -19,7 +19,7 @@ services:
     image: quay.io/keycloak/keycloak
     command: 
       - start-dev 
-      - --hostname=localhost
+      - --hostname=192.168.1.3
       - --import-realm
     expose:
       - "8080"
@@ -34,9 +34,9 @@ services:
       - "./cfg-keycloak/:/opt/keycloak/data/import:ro"
       # - ./test:/test
     restart: always
-    # networks:
-    #   ccnet:
-    #     ipv4_address: 192.168.1.3
+    networks:
+      ccnet:
+        ipv4_address: 192.168.1.3
   nodejson:
     container_name: nodejson
     image: customnode
