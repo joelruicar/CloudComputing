@@ -5,6 +5,7 @@
   "main": "app.js",
   "dependencies": {
     "express": "^4.16.4",
-    "nats": "^2.5.3"
+    "nats": "^2.18.0",
+    "rimraf": "^3.0.2"
   }
 }

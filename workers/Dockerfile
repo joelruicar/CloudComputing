@@ -1,24 +1,29 @@
-# Use the official Node.js image as base
+# Usa la imagen oficial de Node.js como base
 FROM node:16-alpine
 
-# Create app directory
+# Establece el directorio de trabajo
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
+# Copia los archivos de configuración de la aplicación
 COPY package*.json ./
 
-# Install app dependencies
-RUN npm install
-RUN apk add --no-cache python3 && ln -sf python3 /usr/bin/python
+# Instala dependencias de la aplicación y g++
+RUN apk add --no-cache python3 \
+    && apk add --update g++ \
+    && rm -rf /var/cache/apk/*
 
-
-# Bundle app source
+# Copia el código fuente de la aplicación
 COPY . .
 
-# Expose port 8080
+# Instala las dependencias de la aplicación
+RUN npm install
+
+RUN apk add --no-cache git
+
+# Expone el puerto 8080
 EXPOSE 8080
 
-# Define the command to run your application
+# Define el comando para ejecutar la aplicación
 CMD [ "node", "app.js" ]
 
 #docker build -t node-image-demo .

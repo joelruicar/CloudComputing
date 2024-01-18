@@ -1,7 +1,9 @@
+// app.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const { connect } = require('nats');
-
+const { sendJob } = require('./send_job'); 
+const { welcomeMessage } = require('./welcome_message');
 const app = express();
 const port = 3000;
 
@@ -12,7 +14,6 @@ let nc;
 async function connectToNats() {
   try {
     nc = await connect();
-
     console.log('Connected to NATS');
   } catch (err) {
     console.error('Error connecting to NATS:', err);
@@ -24,21 +25,15 @@ connectToNats();
 
 app.use(bodyParser.json());
 
-app.post('/send-job', (req, res) => {
-
-  // Verificar que la conexión a NATS esté establecida antes de intentar publicar
-  if (nc) {
-    const job = req.body;
-    nc.publish('job_queue', JSON.stringify(job));
-    
-    console.log('Trabajo recibido y agregado a la cola. ')
-    res.status(200).json({ message: 'Trabajo recibido y en la cola.' });
-  } else {
-    res.status(500).json({ error: 'Failed to publish job. NATS connection not established.' });
-  }
-});
+// Utiliza la función del controlador para la ruta '/send-job'
+app.post('/send-job', sendJob);
+app.post('/', welcomeMessage);
 
 app.listen(port, () => {
-  console.log('Frontend listening at http://localhost:${port}');
-  
+  console.log(`Frontend listening at http://localhost:${port}`);
 });
+
+// Exporta nc para que pueda ser utilizado en otros archivos
+module.exports = {
+  nc,
+};
