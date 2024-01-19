@@ -8,7 +8,9 @@ services:
     hostname: oauth2-proxy
     volumes:
       - "./cfg-oauth2/oauth2-proxy.cfg:/oauth2-proxy.cfg"
-    restart: unless-stopped
+    restart: always
+    depends_on:
+      - keycloak
     networks:
       ccnet:
         ipv4_address: 192.168.1.2
@@ -19,16 +21,19 @@ services:
       - start-dev 
       - --hostname=192.168.1.3
       - --import-realm
+    expose:
+      - "8080"
     ports:
       - 8080:8080
     environment:
       KEYCLOAK_ADMIN: admin 
       KEYCLOAK_ADMIN_PASSWORD: 1234
-      KEYCLOAK_IMPORT: /opt/keycloak/data/import/keycloak_export.json
+      # KEYCLOAK_IMPORT: /opt/keycloak/data/import/keycloak_export.json
     hostname: keycloak
     volumes:
-      - "./cfg-keycloak/keycloak_export.json:/opt/keycloak/data/import/keycloak_export.json"
-    restart: unless-stopped
+      - "./cfg-keycloak/:/opt/keycloak/data/import:ro"
+      # - ./test:/test
+    restart: always
     networks:
       ccnet:
         ipv4_address: 192.168.1.3
@@ -37,8 +42,11 @@ services:
     image: customnode
     build:
       dockerfile: node.Dockerfile
-    # ports:
-    #   - 3000:3000
+    restart: always
+    expose:
+      - "3000"
+    ports:
+      - 3000:3000
     networks:
       ccnet:
         ipv4_address: 192.168.1.4
