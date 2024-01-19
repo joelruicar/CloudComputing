@@ -10,7 +10,7 @@ const routeApi = require('./routes/route.js');  //se importa solamente uno.
 const app = express();
 const PORT = 3000;
 
-const NATS_URL = 'nats://localhost:4222';
+const NATS_URL = 'nats://192.168.1.5:4222';
   
 app.use(express.json());
 app.use(express.urlencoded( {extended: false}));  //

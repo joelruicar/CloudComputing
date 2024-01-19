@@ -7,7 +7,7 @@ const startCola = async () => {
 
     try{
         console.log("Start connection NATS");
-        natsConnection = await connect({ service: "localhost:4222"});
+        natsConnection = await connect({ servers: "192.168.1.5"});
         console.log("Connected to nats");
     }
 
