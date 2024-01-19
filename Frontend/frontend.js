@@ -1,39 +1,29 @@
-// app.js
+//Librerias
 const express = require('express');
-const bodyParser = require('body-parser');
 const { connect } = require('nats');
-const { sendJob } = require('./send_job'); 
-const { welcomeMessage } = require('./welcome_message');
+const { v4: uuidv4 } = require('uuid'); // Importar la función v4 de uuid para generar UUIDs
+
+//Llamadas
+const {startCola} = require('./queue.js');
+const routeApi = require('./routes/route.js');  //se importa solamente uno.
+
 const app = express();
-const port = 3000;
+const PORT = 3000;
 
-// Variable global para la conexión NATS
-let nc;
+const NATS_URL = 'nats://localhost:4222';
+  
+app.use(express.json());
+app.use(express.urlencoded( {extended: false}));  //
 
-// Función para establecer la conexión
-async function connectToNats() {
-  try {
-    nc = await connect();
-    console.log('Connected to NATS');
-  } catch (err) {
-    console.error('Error connecting to NATS:', err);
-  }
-}
+app.use ('/api', routeApi);
 
-// Llamada a la función de conexión
-connectToNats();
-
-app.use(bodyParser.json());
-
-// Utiliza la función del controlador para la ruta '/send-job'
-app.post('/send-job', sendJob);
-app.post('/', welcomeMessage);
-
-app.listen(port, () => {
-  console.log(`Frontend listening at http://localhost:${port}`);
+app.get('/', (req,res) => {
+  res.send('Servidor FE');
 });
 
-// Exporta nc para que pueda ser utilizado en otros archivos
-module.exports = {
-  nc,
-};
+startCola();
+
+  // Iniciar el servidor
+  app.listen(PORT, () => {
+    console.log(`Frontend escuchando en el puerto ${PORT}`);
+  });
