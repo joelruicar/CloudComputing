@@ -1,7 +1,0 @@
-version: '3'
-services: 
-  queue:
-    image: 'nats:2.1.2'
-    ports:
-      - "4222:4222"
-      - "8222:8222"
