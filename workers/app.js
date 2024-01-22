@@ -1,14 +1,45 @@
 //coge el ID, descarga los archivos del object storage en una carpeta temporal y los ejecuta, lo guarda en la carpeta results
 // y un archivo .sdtoud para la cola nats, cambiar estado del KV storage a in execution, done o error
 
-const { connect, subscribe, StringCodec } = require("nats");
+const { connect, subscribe, StringCodec, StorageType } = require("nats");
 const fs = require('fs');
 const path = require("path");
 const destinationFolder = 'temp'
 const rimraf = require('rimraf');
 const util = require('util');
-const { NatsConnectionImpl } = require("nats/lib/nats-base-client/nats");
 const execAsync = util.promisify(require('child_process').exec);
+
+async function buscarDatos(id, kv,sc) {
+  rimraf.sync(destinationFolder);
+  const data = await kv.get(id);
+
+  if (data) {
+    keyValueChanges(id, kv, sc, "executing")
+    try {
+      const dataJSON = JSON.parse(sc.decode(data.value))
+      const url = dataJSON.URL
+      
+      await execAsync(`git clone ${url} ${destinationFolder}`);
+    } catch (error) {
+      console.error(`Error: ${error.message}`);
+      saveResultToFile(id, error.message)
+      keyValueChanges(id, kv, sc, "error")
+    }
+  }
+  else {
+      console.log("ID inválido")
+  }
+}
+
+async function keyValueChanges(id, kv, sc, estadoParam) {
+  let data = await kv.get(id);
+  let existingState = JSON.parse(sc.decode(data.value))
+  console.log(existingState)
+  existingState.STATE = estadoParam
+  finalState = JSON.stringify(existingState)
+  await kv.put(id, sc.encode(finalState))
+  console.log(finalState)
+}
 
 function saveResultToFile(id, data) {
   const resultFilePath = path.join('results', `${id}.stdoud`);
@@ -20,74 +51,39 @@ function saveResultToFile(id, data) {
       console.log(`Resultado guardado en el archivo: ${resultFilePath}`);
     }
   });
+
+  
 }
 
-async function keyValueChanges(id, kv, sc, estadoParam) {
-  let currentState;
-  // Verificar si ya existe la clave en el KeyValue Store
-  const existingState = await kv.get(id);
-
-  if (existingState) {
-    // Si la clave existe, decodificar el estado actual
-    currentState = sc.decode(existingState);
-  } else {
-    // Si la clave no existe, crear un objeto con el atributo "estado"
-    currentState = { estado: null }; // Puedes ajustar el valor inicial según tus necesidades
-  }
-
-  // Modificar solo el atributo "estado" del objeto currentState con el valor de estadoParam
-  currentState.estado = estadoParam;
-
-  await kv.put(id, sc.encode(currentState));
-}
-
-async function descargarRepositorio(id, sc) {
-  // const js = nc.jetstream();
-  // const kv = await js.views.kv("testing");
-  rimraf.sync(destinationFolder);
-
-  // keyValueChanges(id, kv, sc, "executing")
-  try {
-    await execAsync(`git clone https://github.com/joelruicar/basicPython ${destinationFolder}`);
-   
-    //obtener extension del repositorio descargado 
-    let extensionMain;
-    for (const elem of fs.readdirSync(destinationFolder)) {
-      const nombre = path.parse(elem).name;
-      const extension = path.parse(elem).ext.substr(1); 
-      if (nombre === 'main') {
-        extensionMain = extension;
-      }
+function obtenerExtension() {
+  let extensionMain;
+  for (const elem of fs.readdirSync(destinationFolder)) {
+    const nombre = path.parse(elem).name;
+    const extension = path.parse(elem).ext.substr(1); 
+    if (nombre === 'main') {
+      extensionMain = extension;
     }
-    await ejecutarScriptSegunExtension(extensionMain ,"main");
-   
-    // keyValueChanges(id, kv, sc, "done")
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    saveResultToFile(id, error.message)
-    // keyValueChanges(id, kv, sc, "error")
   }
+  return extensionMain
 }
 
-async function ejecutarScriptSegunExtension(extension, file) {
-  console.log(extension, "a")
+async function ejecutarScriptSegunExtension(extension, file, id, kv, sc) {
   switch (extension) {
     case 'py':
-      return ejecutarPython(file + "." + extension);
+      return ejecutarPython(file + "." + extension, id, kv, sc);
     case 'cpp':
-      return ejecutarCPP(file+"."+extension);
-      break;
+      return ejecutarCPP(file+"."+extension, id, kv, sc);
     case 'c':
-
+    return ejecutarC(file+"."+extension, id, kv, sc);
       break;
     default:
       console.log(`Extensión no soportada: ${extension}`);
-      saveResultToFile("", `Extensión no soportada: ${extension}`)
+      saveResultToFile(id, `Extensión no soportada: ${extension}`)
       return Promise.resolve(null);
   }
 }
 
-async function ejecutarPython(scriptPath) {
+async function ejecutarPython(scriptPath, id, kv, sc) {
   return new Promise(async (resolve, reject) => {
     try {
       const comando = `python3 ${path.join(destinationFolder, scriptPath)}`;
@@ -99,22 +95,23 @@ async function ejecutarPython(scriptPath) {
       } else {
         console.log(`Script de Python ejecutado correctamente: ${stdout}`);
         
-        saveResultToFile("", stdout);
+        saveResultToFile(id, stdout);
+        await guardarEnKV(id, kv, sc, stdout)
+        
         resolve(stdout);
 
       }
     } catch (error) {
       console.error(`Error al ejecutar el script de Python: ${error.message}`);
-      saveResultToFile("id", stderr)
+      saveResultToFile(id, stderr)
       reject(error);
     }
   });
 }
 
-async function ejecutarCPP(scriptPath) {
+async function ejecutarCPP(scriptPath, id, kv, sc) {
   return new Promise(async (resolve, reject) => {
     try {
-    
       const comando = `g++ ${path.join(destinationFolder, scriptPath)} -o ${path.join(destinationFolder, 'output')}`;
       const compileResult = await execAsync(comando);
       if (compileResult.stderr) {
@@ -130,41 +127,113 @@ async function ejecutarCPP(scriptPath) {
         reject(new Error(`Error al ejecutar el código C++: ${stderr}`));
       } else {
         console.log(`Código C++ ejecutado correctamente: ${stdout}`);  
-        saveResultToFile("", stdout)
+        saveResultToFile(id, stdout)
+        await guardarEnKV(id, kv, sc, stdout)
         resolve(stdout);
       }
     } catch (error) {
       console.error(`Error al ejecutar el código C++: ${error.message}`);
-      saveResultToFile("", error.message);
+      saveResultToFile(id, error.message);
       reject(error);
     }
   });
 }
 
-async function run() {
-  //la tarea ya viene on queue
-  //Ajustar la URL a la configuracion del NATS
-  const natskvUrl = 'nats://172.17.0.2:4222';
+async function ejecutarC(scriptPath, id, kv, sc) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ejecutablePath = path.join(destinationFolder, 'output');
 
-  const nc = await connect({ servers: [natskvUrl] });
-  const sc = StringCodec();
-  console.log(`connected to ${nc.getServer()}`);
+      const compileCommand = `gcc ${path.join(destinationFolder, scriptPath)} -o ${ejecutablePath}`;
+      const compileResult = await execAsync(compileCommand);
+
+      if (compileResult.stderr) {
+        console.error(`Error al compilar el código C: ${compileResult.stderr}`);
+        reject(new Error(`Error al compilar el código C: ${compileResult.stderr}`));
+        return;
+      }
+
+      const { stdout, stderr } = await execAsync(ejecutablePath);
+
+      if (stderr) {
+        console.error(`Error al ejecutar el código C: ${stderr}`);
+        reject(new Error(`Error al ejecutar el código C: ${stderr}`));
+      } else {
+        console.log(`Código C ejecutado correctamente: ${stdout}`);
+        saveResultToFile(id, stdout)
+        await guardarEnKV(id, kv, sc, stdout)
+        resolve(stdout);
+      }
+    } catch (error) {
+      console.error(`Error al ejecutar el código C: ${error.message}`);
+      saveResultToFile(id, error.message);
+      reject(error);
+    }
+  });
+}
+
+
+ async function guardarEnKV(id, kv, sc, stdout) {
+  try {
+    let estado = await kv.get(id);
+    const dataJSON = JSON.parse(sc.decode(estado.value))
+    dataJSON.RESULTS = stdout
+    finalState = JSON.stringify(dataJSON)
+    await kv.put(id, sc.encode(finalState))
+    
+  } catch (error) {
+    console.error(`Error al leer o guardar el archivo: ${error.message}`);
+  }
+}
+
+async function run() {
+  const sc = StringCodec();  
+  //la tarea ya viene on queue
+  //Ajustar la URL a la configuracion del NATS mediante docker inspect nats-q
+  const natsUrl = 'nats://172.17.0.2:4222';
+  const natsKVUrl = 'nats://172.17.0.3:4223';
+  
+  const nc = await connect({ servers: [natsUrl] });
+  const nckv = await connect({ servers: [natsKVUrl] });
   groupName  = 'group1'
   const sub = nc.subscribe('jobs_executors', {queue: groupName });
  
-  // const js = await nc.jetstream();
-  // const kv = await js.views.kv('testing', { history: 5 });
-  // const os = await js.views.os("testing", { storage: NATS.StorageType.File });
+  const js = await nckv.jetstream();
+  const kv = await js.views.kv('testing', { history: 5 });
+  const os = await js.views.os("testing", { storage: StorageType.File });
   
+  //Le pasamos un ID de prueba, suponemos que le llega un string de un JSON
+  if (kv.get("4558308c-4cb2-4194-a8c0-9f5539178a5e") != null) {
+    await kv.delete("4558308c-4cb2-4194-a8c0-9f5539178a5e")
+    await kv.create("4558308c-4cb2-4194-a8c0-9f5539178a5e", sc.encode(JSON.stringify({
+      "URL": "https://github.com/joelruicar/basicPython",
+      "STATE": "in_queue",
+      "RESULTS": ""
+    })))
+  }
+
+  if (kv.get("5558308c-4cb2-4194-a8c0-9f5539178a5e") != null) {
+    await kv.delete("5558308c-4cb2-4194-a8c0-9f5539178a5e")
+    await kv.create("5558308c-4cb2-4194-a8c0-9f5539178a5e", sc.encode(JSON.stringify({
+      "URL": "https://github.com/joelruicar/basicCPP",
+      "STATE": "in_queue",
+      "RESULTS": ""
+    })))
+  }
+
   (async () => {
     for await (const m of sub) {
-      descargarRepositorio("", sc);
-      
-    console.log(sc.decode(m.data));
+      let id= sc.decode(m.data)
+      await buscarDatos(id, kv, sc)
+      extensionMain = obtenerExtension()
+      await ejecutarScriptSegunExtension(extensionMain ,"main", id, kv, sc);
+      keyValueChanges(id, kv, sc, "done")
     }
   })();
-
-  await nc.publish("jobs_executors", sc.encode("{}") )
+  
+  //lo que en teoria le llega al worker 
+  await nc.publish("jobs_executors", sc.encode("4558308c-4cb2-4194-a8c0-9f5539178a5e"))
+  await nc.publish("jobs_executors", sc.encode("5558308c-4cb2-4194-a8c0-9f5539178a5e"))
 }
 
 run().catch((err) => {
