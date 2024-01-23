@@ -67,8 +67,12 @@ services:
         ipv4_address: 192.168.1.4
   nats:
     container_name: nats
-    image: 'nats:2.1.2'
+    image: 'nats:2.10.9'
     restart: always
+    ports:
+      - 4222:4222
+      - 6222:6222
+      - 8222:8222
     networks:
       ccnet:
         ipv4_address: 192.168.1.5

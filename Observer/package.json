@@ -1,0 +1,17 @@
+{
+  "name": "observer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "observer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node observer.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "nats": "^2.18.0"
+  },
+  "type": "module"
+}
