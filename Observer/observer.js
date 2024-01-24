@@ -4,7 +4,9 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function observer(){
+async function observer() {
+    const nats_hostname = "192.168.1.5"
+
     const MAX_MSGS_ALERT = 10
     const MIN_MSGS_ALERT = 0
     const MS_TO_MIN = 1000 * 60
@@ -15,46 +17,59 @@ async function observer(){
     var counter_max = 0
     var counter_min = 0
 
-    while(true){
-        const response = await fetch("http://localhost:8222/varz");
+    const nc = await connect({ servers: nats_hostname });
+    console.log(`connected to ${nc.getServer()}`);
+
+    const js = await nc.jetstream();
+    const sc = StringCodec();
+    const kv = await js.views.kv("Observer");
+
+    while (true) {
+        const response = await fetch("http://" + nats_hostname + ":8222/varz");
         const stats = await response.json();
         var pending = stats.in_msgs - stats.out_msgs
 
         console.log("PENDING: " + pending);
+        var date = new Date()
+        var fecha = date.toISOString().toString()
+        fecha = fecha.replaceAll(":", "_")
+        fecha = fecha.replaceAll(".", "_")
+        console.log(fecha)
 
-        if(pending >= MAX_MSGS_ALERT)
+        if (pending >= MAX_MSGS_ALERT)
             counter_max++
-        else
-            counter_max = 0
-
-        if(pending == MIN_MSGS_ALERT)
+        else if (pending == MIN_MSGS_ALERT)
             counter_min++
-        else
+        else {
             counter_min = 0
+            counter_max = 0
+            try {
+                await kv.create(fecha, sc.encode("NO NEED FOR SCALABILITY ACTIONS"));
+            } catch (err) {
+                console.log("Error on KV entry creation")
+            }
+        }
 
-        if(counter_max >= COUNTER_MAX_ALERT)
-            console.log("QUEUE MAX LIMIT EXCEEDED! SCALE UP NEEDED")
+        if (counter_max >= COUNTER_MAX_ALERT) {
+            console.log("QUEUE MAXIMUM LIMIT EXCEEDED! SCALE UP ACTIONS NEEDED")
+            try {
+                await kv.create(fecha, sc.encode("QUEUE MAXIMUM LIMIT EXCEEDED! SCALE UP ACTIONS NEEDED"));
+            } catch (err) {
+                console.log("Error on KV entry creation")
+            }
+        }
 
-        if(counter_min >= COUNTER_MIN_ALERT)
-            console.log("QUEUE MIN LIMIT MET! SCALE DOWN SUGGESTED")
+        if (counter_min >= COUNTER_MIN_ALERT) {
+            console.log("QUEUE MINIMUM LIMIT MET! SCALE DOWN ACTIONS SUGGESTED")
+            try {
+                await kv.create(fecha, sc.encode("QUEUE MINIMUM LIMIT MET! SCALE DOWN ACTIONS SUGGESTED"));
+            } catch (err) {
+                console.log("Error on KV entry creation")
+            }
+        }
 
-        // await sleep(MINUTES * MS_TO_SECS)
-        await sleep(1000)
-    }
-}
-
-async function testpublish(){
-    const nc = await connect({ servers: "localhost"});
-    const sc = StringCodec();
-    
-    var pendingBytes, pendingMessages
-
-    while(true){
-        console.log("Test")
-        nc.publish("cola", sc.encode("Test"));
-        await sleep(2000)
+        await sleep(MINUTES * MS_TO_MIN)
     }
 }
 
 observer()
-// testpublish()
