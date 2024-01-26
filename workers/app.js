@@ -229,7 +229,7 @@ async function run() {
   //Ajustar la URL a la configuracion del NATS mediante docker inspect nats-q
   const natsUrl = '192.168.1.5';
   
-  const nc = await connect({ servers: natsUrl });
+  const nc = await connect({ servers: natsUrl });
   groupName  = 'group1'
   const sub = nc.subscribe('jobs_executors', {queue: groupName });
   // const res = nc.('job_results', {queue: groupName });
@@ -275,3 +275,4 @@ async function run() {
 run().catch((err) => {
   console.error(err);
 });
+
