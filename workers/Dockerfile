@@ -1,33 +1,42 @@
 # Usa la imagen oficial de Node.js como base
 FROM node:16-alpine
 
-# Establece el directorio de trabajo
-WORKDIR /usr/src/app
+# Crear un nuevo usuario sin privilegios
+RUN adduser -D -g '' newuser
 
-# Copia los archivos de configuración de la aplicación
-COPY package*.json ./
+# Establecer el directorio de trabajo para el nuevo usuario
+WORKDIR /home/newuser
 
-# Instala dependencias de la aplicación y g++
-RUN apk add --no-cache python3 \
-    && apk add --update g++ \
-    && rm -rf /var/cache/apk/*
+# Cambiar la propiedad del directorio de trabajo al nuevo usuario
+RUN chown -R newuser:newuser /home/newuser
 
-# Copia el código fuente de la aplicación
-COPY . .
+# Copiar los archivos de configuración de la aplicación
+COPY --chown=newuser:newuser package*.json ./
 
-# Instala las dependencias de la aplicación
+# Instalar dependencias de la aplicación y g++
+RUN  apk add --no-cache python3 && \
+     apk add --update g++ && \
+    rm -rf /var/cache/apk/*
+
+# Copiar el código fuente de la aplicación
+COPY --chown=newuser:newuser . .
+
+# Instalar las dependencias de la aplicación
 RUN npm install
 
 RUN apk add --no-cache git
 
 RUN apk add --no-cache gcc
-# Expone el puerto 8080
-EXPOSE 8080
 
-# Define el comando para ejecutar la aplicación
+# Exponer el puerto 8081
+EXPOSE 8081
+
+# Cambiar al nuevo usuario
+USER newuser
+
+# Definir el comando para ejecutar la aplicación
 CMD [ "node", "app.js" ]
 
-#docker build -t worker .
-#docker run -p 8080:8080 worker
-#docker run -p 4222:4222 --name nats-q nats:latest
-#docker run -p 4223:4223 --name nats-kv nats:latest -js -p 4223
+
+# docker build -t worker .
+# docker run -p 8081:8081 --net cloudcomputing_ccnet --rm --ip 192.168.1.10 worker 
