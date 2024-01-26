@@ -8,6 +8,7 @@ const destinationFolder = 'temp'
 const rimraf = require('rimraf');
 const util = require('util');
 const execAsync = util.promisify(require('child_process').exec);
+const { ReadableStream } = require('node:stream/web');
 
 async function buscarDatos(id, kv,sc) {
   rimraf.sync(destinationFolder);
@@ -34,7 +35,6 @@ async function buscarDatos(id, kv,sc) {
 async function keyValueChanges(id, kv, sc, estadoParam) {
   let data = await kv.get(id);
   let existingState = JSON.parse(sc.decode(data.value))
-  console.log(existingState)
   existingState.STATE = estadoParam
   finalState = JSON.stringify(existingState)
   await kv.put(id, sc.encode(finalState))
@@ -51,8 +51,6 @@ function saveResultToFile(id, data) {
       console.log(`Resultado guardado en el archivo: ${resultFilePath}`);
     }
   });
-
-  
 }
 
 function obtenerExtension() {
@@ -67,14 +65,14 @@ function obtenerExtension() {
   return extensionMain
 }
 
-async function ejecutarScriptSegunExtension(extension, file, id, kv, sc) {
+async function ejecutarScriptSegunExtension(extension, file, id, kv, sc, os) {
   switch (extension) {
     case 'py':
-      return ejecutarPython(file + "." + extension, id, kv, sc);
+      return ejecutarPython(file + "." + extension, id, kv, sc,os);
     case 'cpp':
-      return ejecutarCPP(file+"."+extension, id, kv, sc);
+      return ejecutarCPP(file+"."+extension, id, kv, sc,os);
     case 'c':
-    return ejecutarC(file+"."+extension, id, kv, sc);
+    return ejecutarC(file+"."+extension, id, kv, sc,os);
       break;
     default:
       console.log(`Extensión no soportada: ${extension}`);
@@ -83,7 +81,7 @@ async function ejecutarScriptSegunExtension(extension, file, id, kv, sc) {
   }
 }
 
-async function ejecutarPython(scriptPath, id, kv, sc) {
+async function ejecutarPython(scriptPath, id, kv, sc,os) {
   return new Promise(async (resolve, reject) => {
     try {
       const comando = `python3 ${path.join(destinationFolder, scriptPath)}`;
@@ -97,19 +95,20 @@ async function ejecutarPython(scriptPath, id, kv, sc) {
         
         saveResultToFile(id, stdout);
         await guardarEnKV(id, kv, sc, stdout)
+        await guardarEnOS(id, os, sc, stdout)
         
         resolve(stdout);
 
       }
     } catch (error) {
       console.error(`Error al ejecutar el script de Python: ${error.message}`);
-      saveResultToFile(id, stderr)
+      saveResultToFile(id, error)
       reject(error);
     }
   });
 }
 
-async function ejecutarCPP(scriptPath, id, kv, sc) {
+async function ejecutarCPP(scriptPath, id, kv, sc,os) {
   return new Promise(async (resolve, reject) => {
     try {
       const comando = `g++ ${path.join(destinationFolder, scriptPath)} -o ${path.join(destinationFolder, 'output')}`;
@@ -129,6 +128,7 @@ async function ejecutarCPP(scriptPath, id, kv, sc) {
         console.log(`Código C++ ejecutado correctamente: ${stdout}`);  
         saveResultToFile(id, stdout)
         await guardarEnKV(id, kv, sc, stdout)
+        await guardarEnOS(id, os, sc, stdout)
         resolve(stdout);
       }
     } catch (error) {
@@ -139,7 +139,7 @@ async function ejecutarCPP(scriptPath, id, kv, sc) {
   });
 }
 
-async function ejecutarC(scriptPath, id, kv, sc) {
+async function ejecutarC(scriptPath, id, kv, sc, os) {
   return new Promise(async (resolve, reject) => {
     try {
       const ejecutablePath = path.join(destinationFolder, 'output');
@@ -162,6 +162,7 @@ async function ejecutarC(scriptPath, id, kv, sc) {
         console.log(`Código C ejecutado correctamente: ${stdout}`);
         saveResultToFile(id, stdout)
         await guardarEnKV(id, kv, sc, stdout)
+        await guardarEnOS(id, os, sc, stdout)
         resolve(stdout);
       }
     } catch (error) {
@@ -172,10 +173,10 @@ async function ejecutarC(scriptPath, id, kv, sc) {
   });
 }
 
-
  async function guardarEnKV(id, kv, sc, stdout) {
   try {
     let estado = await kv.get(id);
+    
     const dataJSON = JSON.parse(sc.decode(estado.value))
     dataJSON.RESULTS = stdout
     finalState = JSON.stringify(dataJSON)
@@ -186,23 +187,58 @@ async function ejecutarC(scriptPath, id, kv, sc) {
   }
 }
 
+function readableStreamFrom(data) {
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(data);
+      controller.close();
+    },
+  });
+}
+
+async function fromReadableStream(rs, sc) {
+  result = ""
+  const reader = rs.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    if (value && value.length) {
+      result += sc.decode(value);
+    }
+  }
+  return result;
+}
+
+async function guardarEnOS(id, os, sc, stdout) {
+  try {
+    await os.put({
+      name: id,
+    }, readableStreamFrom(sc.encode(JSON.stringify(stdout))));
+  const estado = await os.get(id);
+  result = await fromReadableStream(estado.data, sc);
+  } catch (error) {
+    console.error(`Error al leer o guardar el archivo OS: ${error.message}`);
+  }
+}
+
 async function run() {
   const sc = StringCodec();  
   //la tarea ya viene on queue
   //Ajustar la URL a la configuracion del NATS mediante docker inspect nats-q
-  const natsUrl = 'nats://172.17.0.2:4222';
-  const natsKVUrl = 'nats://172.17.0.3:4223';
+  const natsUrl = '192.168.1.5';
   
-  const nc = await connect({ servers: [natsUrl] });
-  const nckv = await connect({ servers: [natsKVUrl] });
+  const nc = await connect({ servers: natsUrl });
   groupName  = 'group1'
   const sub = nc.subscribe('jobs_executors', {queue: groupName });
+  // const res = nc.('job_results', {queue: groupName });
  
-  const js = await nckv.jetstream();
+  const js = await nc.jetstream();
   const kv = await js.views.kv('testing', { history: 5 });
   const os = await js.views.os("testing", { storage: StorageType.File });
   
-  //Le pasamos un ID de prueba, suponemos que le llega un string de un JSON
+  //Le pasamos un ID de prueba, suponemos que le llega así
   if (kv.get("4558308c-4cb2-4194-a8c0-9f5539178a5e") != null) {
     await kv.delete("4558308c-4cb2-4194-a8c0-9f5539178a5e")
     await kv.create("4558308c-4cb2-4194-a8c0-9f5539178a5e", sc.encode(JSON.stringify({
@@ -226,7 +262,7 @@ async function run() {
       let id= sc.decode(m.data)
       await buscarDatos(id, kv, sc)
       extensionMain = obtenerExtension()
-      await ejecutarScriptSegunExtension(extensionMain ,"main", id, kv, sc);
+      await ejecutarScriptSegunExtension(extensionMain ,"main", id, kv, sc,os);
       keyValueChanges(id, kv, sc, "done")
     }
   })();
