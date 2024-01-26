@@ -15,4 +15,16 @@ routeApi.post('/job', async (req, res) => {
 
 });
 
+routeApi.post('/job/queue', async (req, res) => {
+    const job = req.body;
+
+    createWork(job).then((data) => {
+        res.json({jobId:data});
+    })
+    .catch((error) => {
+        res.status(500).json({error:error,message});
+    });
+
+});
+
 module.exports = routeApi;
