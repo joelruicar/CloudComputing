@@ -6,11 +6,11 @@ function welcome_message(req, res) {
     res.status(200).json({
       message:
         "Comandos disponibles: \n \
-      submit-job [git URL] {name}: Crea un nuevo trabajo a partir de una URL. Recibe opcionalmente un nombre y devuelve la ID del trabajo \n \
-      exec-job [ID|name]: Ejecuta el trabajo especificado \n \
-      status-job [ID|name]: Estado en que se encuentra el trabajo (ready, running, done) \n \
-      result-job [ID|name]: Output del trabajo\n \
-      delete-job []ID|name]: Eliminación del trabajo \n \
+      submit-job [git URL] {name}: Crea un nuevo trabajo a partir de una URL. Devuelve la ID del trabajo \n \
+      exec-job [ID]: Ejecuta el trabajo especificado \n \
+      status-job [ID]: Estado en que se encuentra el trabajo (ready, running, done) \n \
+      result-job [ID]: Output del trabajo\n \
+      delete-job [ID]: Eliminación del trabajo \n \
        my-jobs: ID, nombre y estado de los trabajos del usuario",
     });
   } else {
