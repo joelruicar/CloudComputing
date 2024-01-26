@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.32.0 (765fde254)
+  labels:
+    io.kompose.service: oauth2-proxy
+  name: oauth2-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: oauth2-proxy
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.32.0 (765fde254)
+      labels:
+        io.kompose.network/cloudcomputing-ccnet: "true"
+        io.kompose.service: oauth2-proxy
+    spec:
+      containers:
+        - args:
+            - --config
+            - /oauth2-proxy.cfg
+          image: bitnami/oauth2-proxy:latest
+          name: oauth2-proxy
+          ports:
+            - containerPort: 4180
+              hostPort: 4180
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /oauth2-proxy.cfg
+              name: oauth2-proxy-claim0
+      hostname: oauth2-proxy
+      restartPolicy: Always
+      volumes:
+        - name: oauth2-proxy-claim0
+          persistentVolumeClaim:
+            claimName: oauth2-proxy-claim0

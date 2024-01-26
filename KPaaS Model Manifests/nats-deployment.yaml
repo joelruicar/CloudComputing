@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.32.0 (765fde254)
+  labels:
+    io.kompose.service: nats
+  name: nats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: nats
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.32.0 (765fde254)
+      labels:
+        io.kompose.network/cloudcomputing-ccnet: "true"
+        io.kompose.service: nats
+    spec:
+      containers:
+        - args:
+            - -js
+            - -m
+            - "8222"
+          image: nats:2.10.9
+          name: nats
+          ports:
+            - containerPort: 4222
+              hostPort: 4222
+              protocol: TCP
+            - containerPort: 6222
+              hostPort: 6222
+              protocol: TCP
+            - containerPort: 8222
+              hostPort: 8222
+              protocol: TCP
+      restartPolicy: Always
