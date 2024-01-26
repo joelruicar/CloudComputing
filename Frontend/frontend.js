@@ -18,12 +18,12 @@ app.use(express.urlencoded( {extended: false}));  //
 app.use ('/api', routeApi);
 
 app.get('/', (req,res) => {
-  res.send('Servidor FE');
+  res.send('Servidor FrontEnd');
 });
 
 startCola();
 
   // Iniciar el servidor
   app.listen(PORT, () => {
-    console.log(`Frontend escuchando en el puerto ${PORT}`);
+    console.log(`FrontEnd escuchando en el puerto ${PORT}`);
   });
