@@ -18,54 +18,53 @@ const startCola = async () => {
 }
 
 const createWork = async (body ={})  => {
-    try {
-        const sc = StringCodec();
-        body.id = uuidv4();
-        currentId = body.id; // Almacenar el id actual
-        const value = JSON.stringify(body);
-        //console.log("Value to be published in NATS:", value); // PRUEBA para validar recepcion del ID
+  try {
+    const sc = StringCodec();
+    body.id = uuidv4();
+    currentId = body.id; 
+    const value = JSON.stringify(body);
 
-        //Almacenamiento en el KV
-        const js = natsConnection.jetstream(); // L.  instancia de JetStream.
-        const kv = await js.views.kv("jobs_In");
-        let status = await kv.status();
-        
-        console.log("Trabajo almacenado en la base de datos:", status.streamInfo.config.name,"\n");
-        info =  await kv.put("kv.jobIn", body.id);
-        let entry = await kv.get("kv.jobIn");
-        console.log("Recibido, en proceso de ejecucion:");
-        console.log(`${entry?.key} @ ${entry?.revision} -> ${entry?.string()}\n`);
+    //Almacenamiento en el KV
+    const js = natsConnection.jetstream(); 
+    const kv = await js.views.kv("jobs_In");
+    let status = await kv.status();
+    
+    //Obtener trabajo asociado
+    const jobData = {
+        "URL": "www.google.com",
+        "STATE": "Done"
+    };
 
-        //Trabajo publicado en la cola
-        natsConnection.publish("cola", sc.encode(value));
-        
-         // ver historico de Storage
-         let history = false;
-         const iter = await kv.watch({
-           key: "kv*",
-           initializedFn: () => {
-             history = true;
-           },
-         });
-         (async () => {
-           for await (const e of iter) {
-         
-             console.log(
-               `${
-                 history ? "History" : "Updated"
-               } ${e.key} @ ${e.revision} -> ${e.string()}`,
-             );
-           }
-         })();
+    // Convertir a JSON
+    const jsonData = JSON.stringify(jobData);
 
-        return body.id;
-    }
-    catch (error) {
-        console.log ("Error NATS");
-    }
+    // Convertir a objeto Buffer
+    const bufferData = Buffer.from(jsonData);
+    
+    console.log("Trabajo almacenado en el KeyValue Store:", status.streamInfo.config.name,"\n");
+    //info =  await kv.put("kv.jobIn", body.id);
+    //let entry = await kv.get("kv.jobIn");
+    info =  await kv.put(currentId, bufferData);
+    let entry = await kv.get(currentId);
+    console.log("Informacion del trabajo:");
+    console.log(`${entry?.key} @ ${entry?.revision} -> ${entry?.string()}\n`);
+
+    //Trabajo publicado en la cola
+    natsConnection.publish("cola", sc.encode(value));
+    console.log("Value published in NATS:", "\n", value);
+  
+    //Historico
+
+    return { jobId: currentId, stateData: jsonData };
+}
+  
+  catch (error) {
+    console.log ("Error NATS", error);
+  }
 }
 
-const exportKVstore = async (body ={})  => {
+//(EN PRUEBA) Creacion de KV para usuarios
+const kvUsers = async (body ={})  => {
   try {
       const js = natsConnection.jetstream(); // L.  instancia de JetStream.
       const kv = await js.views.kv("User_list");
@@ -86,5 +85,5 @@ const exportKVstore = async (body ={})  => {
 module.exports = {
     startCola,
     createWork,
-    exportKVstore
+    kvUsers
 }

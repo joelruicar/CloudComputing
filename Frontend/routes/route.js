@@ -1,25 +1,29 @@
 const express = require("express");
 const { connect } = require('nats');
-const {createWork, exportKVstore} = require('../queue.js');
+const {createWork, kvUsers} = require('../queue.js');
 const routeApi = express.Router();  //creacion de variable para acceder a los metodos de Router de express
 
 routeApi.post('/job', async (req, res) => {
     const job = req.body;
 
-    createWork(job).then((data) => {
-        res.json({jobId:data});
-    })
-    .catch((error) => {
-        res.status(500).json({error:error,message});
-    });
+    try {
+        const result = await createWork(job);
+        const jobId = result.jobId;
+        const jsonData = result.stateData;
+        
+        const Consulta = `Solicitud recibida, su ID de trabajo es: ${jobId}. Trabajo almacenado en el KeyValue Store y en cola NATS.`;
+        res.json({Consulta, stateData: jsonData});
 
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-//Recuperar email y enviar a KV User_list
-routeApi.get('/job/out', async (req, res) => {
+//(EN PRUEBA) Recuperar email y enviar a KV User_list
+routeApi.get('/job/users', async (req, res) => {
     const job = req.body;
 
-    exportKVstore(job).then((data) => {
+    kvUsers(job).then((data) => {
         res.json({jobId:data});
     })
     .catch((error) => {
