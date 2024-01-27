@@ -65,7 +65,26 @@ const createWork = async (body ={})  => {
     }
 }
 
+const exportKVstore = async (body ={})  => {
+  try {
+      const js = natsConnection.jetstream(); // L.  instancia de JetStream.
+      const kv = await js.views.kv("User_list");
+      let status = await kv.status();
+      
+      console.log("Usuario almacenado en la base de datos:", status.streamInfo.config.name);
+      info =  await kv.put("kv.email", currentId);
+      let entry = await kv.get("kv.email");
+      console.log(`${entry?.key} @ ${entry?.revision} -> ${entry?.string()}`);
+        
+      return currentId;
+      }
+      catch (error) {
+          console.log (error);
+      }
+  }
+
 module.exports = {
     startCola,
-    createWork
+    createWork,
+    exportKVstore
 }
