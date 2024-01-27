@@ -17,8 +17,8 @@ services:
   keycloak:
     container_name: keycloak
     image: quay.io/keycloak/keycloak
-    command: 
-      - start-dev 
+    command:
+      - start-dev
       - --hostname=192.168.1.3
       - --import-realm
     expose:
@@ -26,7 +26,7 @@ services:
     ports:
       - 8080:8080
     environment:
-      KEYCLOAK_ADMIN: admin 
+      KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: 1234
     hostname: keycloak
     volumes:
@@ -90,10 +90,10 @@ services:
     networks:
       ccnet:
         ipv4_address: 192.168.1.6
-  
+
 networks:
   ccnet:
     ipam:
       driver: default
       config:
-        - subnet: "192.168.1.0/16"
+        - subnet: "192.168.0.0/16"

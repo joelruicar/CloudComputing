@@ -17,17 +17,28 @@ async function observer() {
     var counter_max = 0
     var counter_min = 0
 
+    var myObj = { foo: 0, foo2: 0};
+
     const nc = await connect({ servers: nats_hostname });
     console.log(`connected to ${nc.getServer()}`);
+
+    let sub = nc.subscribe("cola");
+
+    // Ejemplo de consumo de mensajes ralentizado para comprobar como el número de mensajes en la cola cambia con el tiempo
+
+    // const done = (async () => { 
+    //     for await (const msg of sub) {
+    //       console.log(`${msg.string()} on subject ${msg.subject}`);
+    //       await sleep(2000)
+    //     }
+    //   })()
 
     const js = await nc.jetstream();
     const sc = StringCodec();
     const kv = await js.views.kv("Observer");
 
     while (true) {
-        const response = await fetch("http://" + nats_hostname + ":8222/varz");
-        const stats = await response.json();
-        var pending = stats.in_msgs - stats.out_msgs
+        var pending = sub.getPending()
 
         console.log("PENDING: " + pending);
         var date = new Date()
@@ -69,6 +80,7 @@ async function observer() {
         }
 
         await sleep(MINUTES * MS_TO_MIN)
+        // await sleep(1000)
     }
 }
 
