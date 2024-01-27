@@ -31,7 +31,7 @@ const createWork = async (body ={})  => {
     
     //Obtener trabajo asociado
     const jobData = {
-        "URL": "www.google.com",
+        "URL": "https://github.com/joelruicar/basicC",
         "STATE": "Done"
     };
 
