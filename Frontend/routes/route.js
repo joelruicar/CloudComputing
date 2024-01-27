@@ -1,6 +1,6 @@
 const express = require("express");
 const { connect } = require('nats');
-const {createWork, kvUsers} = require('../queue.js');
+const {createWork, kvUsers, createOStore} = require('../queue.js');
 const routeApi = express.Router();  //creacion de variable para acceder a los metodos de Router de express
 
 routeApi.post('/job', async (req, res) => {
@@ -19,17 +19,16 @@ routeApi.post('/job', async (req, res) => {
     }
 });
 
-//(EN PRUEBA) Recuperar email y enviar a KV User_list
-routeApi.get('/job/users', async (req, res) => {
+//(EN PRUEBA) Obtener resultados del OStorage
+routeApi.get('/job/obsResults', async (req, res) => {
     const job = req.body;
-
-    kvUsers(job).then((data) => {
-        res.json({jobId:data});
-    })
-    .catch((error) => {
-        res.status(500).json({error:error,message});
-    });
-
+          try {
+            const jobId = await createOStore(job);
+            const responseMessage = `Trabajo agregado a Object Storage: ${jobId}`;
+            res.json({ responseMessage });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
 });
 
 module.exports = routeApi;

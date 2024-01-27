@@ -17,6 +17,7 @@ const startCola = async () => {
     }
 }
 
+//Almacenamiento en el KV Storage para estados
 const createWork = async (body ={})  => {
   try {
     const sc = StringCodec();
@@ -24,7 +25,6 @@ const createWork = async (body ={})  => {
     currentId = body.id; 
     const value = JSON.stringify(body);
 
-    //Almacenamiento en el KV
     const js = natsConnection.jetstream(); 
     const kv = await js.views.kv("jobs_In");
     let status = await kv.status();
@@ -63,6 +63,38 @@ const createWork = async (body ={})  => {
   }
 }
 
+//Almacenamiento en el OStorage para resultados
+const createOStore = async (body ={})  => {
+  try {
+      const js = natsConnection.jetstream(); 
+      const os = await js.views.os("configs");
+      let status = await os.status();
+     
+      const bytes = 10000000;
+      let data = new Uint8Array(bytes);
+
+      const sc = StringCodec();
+      body.id = uuidv4(); //Pasar ID de trabajo resultado
+      const value = JSON.stringify(body);
+              
+      info = await os.put(
+          { name: "OB Resultados", description: "Bodega de resultados" }
+        );
+        console.log(
+          `added entry ${info.name} (${info.size} bytes)- '${info.description}'`,
+          `the object store has ${status.size} bytes`
+        );
+                  
+        const result = await os.get("OB Resultados");
+         console.log(`${result.info.name} has ${result.info.description} `);
+        return body.id;
+  }
+  catch (error) {
+      console.log (error);
+  }
+}
+
+
 //(EN PRUEBA) Creacion de KV para usuarios
 const kvUsers = async (body ={})  => {
   try {
@@ -85,5 +117,6 @@ const kvUsers = async (body ={})  => {
 module.exports = {
     startCola,
     createWork,
-    kvUsers
+    kvUsers,
+    createOStore
 }
