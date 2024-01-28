@@ -18,7 +18,7 @@ async function buscarDatos(id, kv,sc, os) {
 
   const data = await kv.get(id);
   if (data) {
-    keyValueChanges(id, kv, sc, "executing")
+    await keyValueChanges(id, kv, sc, "executing")
     try {
       const dataJSON = JSON.parse(sc.decode(data.value))
       const url = dataJSON.URL
@@ -26,13 +26,13 @@ async function buscarDatos(id, kv,sc, os) {
       await execAsync(`git clone ${url} ${destinationFolder}`);
     } catch (error) {
       console.error(`Error: ${error.message}`);
-      keyValueChanges(id, kv, sc, "error")
+      await keyValueChanges(id, kv, sc, "error")
     }
   }
   else {
       console.log("ID inválido")
       await guardarEnOS(id, os, sc, "ID inválido")
-      keyValueChanges(id, kv, sc, "error")
+      await keyValueChanges(id, kv, sc, "error")
   }
 }
 
@@ -60,7 +60,7 @@ async function ejecutarScriptSegunExtension(extension, file, id, kv, sc, os, nc)
     default:
       console.log(`Extensión no soportada: ${extension}`);
       await guardarEnOS(id, os, sc, `Extensión no soportada: ${extension}`)
-      keyValueChanges(id, kv, sc, "error")
+      await keyValueChanges(id, kv, sc, "error")
       return Promise.resolve(null);
   }
 }
@@ -89,8 +89,8 @@ async function ejecutarPython(scriptPath, id, kv, sc, os, nc) {
         console.log(`Script de Python ejecutado correctamente: ${stdout}`);
         
         await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion);
-        keyValueChanges(id, kv, sc, "done");
-        guardarTiempoEnKV(id, kv, sc, tiempoDeEjecucion)
+        await keyValueChanges(id, kv, sc, "done");
+        await guardarEnKV(id, kv, sc, tiempoDeEjecucion, stdout)
         // const natsQueue = 'jobs_Out';
         nc.publish(natsQueue, sc.encode(JSON.stringify({
           id,
@@ -102,7 +102,7 @@ async function ejecutarPython(scriptPath, id, kv, sc, os, nc) {
     } catch (error) {
       console.error(`Error al ejecutar el script de Python: ${error.message}`);
       await guardarEnOS(id, os, sc, error, tiempoDeEjecucion);
-      keyValueChanges(id, kv, sc, "error");
+      await keyValueChanges(id, kv, sc, "error");
       reject(error);
     }
   });
@@ -121,8 +121,8 @@ async function ejecutarCPP(scriptPath, id, kv, sc, os, nc) {
       if (compileResult.stderr) {
         console.error(`Error al compilar el código C++: ${compileResult.stderr}`);
         await guardarEnOS(id, os, sc, compileResult.stderr);
-        keyValueChanges(id, kv, sc, "error");
-        reject(new Error(`Error al compilar el código C++: ${compileResult.stderr}`));
+        await keyValueChanges(id, kv, sc, "error");
+        await reject(new Error(`Error al compilar el código C++: ${compileResult.stderr}`));
         return;
       }
 
@@ -138,15 +138,15 @@ async function ejecutarCPP(scriptPath, id, kv, sc, os, nc) {
       if (stderr) {
         console.error(`Error al ejecutar el código C++: ${stderr}`);
         await guardarEnOS(id, os, sc, stderr, tiempoDeEjecucion);
-        keyValueChanges(id, kv, sc, "error");
+        await keyValueChanges(id, kv, sc, "error");
         reject(new Error(`Error al ejecutar el código C++: ${stderr}`));
       } else {
         console.log(`Código C++ ejecutado correctamente: ${stdout}`);
         
         await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion);
-        keyValueChanges(id, kv, sc, "done");
-        guardarTiempoEnKV(id, kv, sc, tiempoDeEjecucion)
-        // const natsQueue = 'jobs_Out';
+        await keyValueChanges(id, kv, sc, "done");
+        await guardarEnKV(id, kv, sc, tiempoDeEjecucion, stdout)
+        const natsQueue = 'jobs_Out';
         nc.publish(natsQueue, sc.encode(JSON.stringify({
           id,
           result: stdout,
@@ -157,7 +157,7 @@ async function ejecutarCPP(scriptPath, id, kv, sc, os, nc) {
     } catch (error) {
       console.error(`Error al ejecutar el código C++: ${error.message}`);
       await guardarEnOS(id, os, sc, error.message);
-      keyValueChanges(id, kv, sc, "error");
+      await keyValueChanges(id, kv, sc, "error");
       reject(error);
     }
   });
@@ -176,7 +176,7 @@ async function ejecutarC(scriptPath, id, kv, sc, os, nc) {
       if (compileResult.stderr) {
         console.error(`Error al compilar el código C: ${compileResult.stderr}`);
         await guardarEnOS(id, os, sc, compileResult.stderr);
-        keyValueChanges(id, kv, sc, "error");
+        await keyValueChanges(id, kv, sc, "error");
         reject(new Error(`Error al compilar el código C: ${compileResult.stderr}`));
         return;
       }
@@ -191,15 +191,15 @@ async function ejecutarC(scriptPath, id, kv, sc, os, nc) {
 
       if (stderr) {
         console.error(`Error al ejecutar el código C: ${stderr}`);
-        await guardarEnOS(id, os, sc, stderr, tiempoDeEjecucion);
-        keyValueChanges(id, kv, sc, "error");
+        await guardarEnOS(id, os, sc, stderr, tiempoDeEjecucion + "s");
+        await keyValueChanges(id, kv, sc, "error");
         reject(new Error(`Error al ejecutar el código C: ${stderr}`));
       } else {
         console.log(`Código C ejecutado correctamente: ${stdout}`);
         
         await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion);
-        keyValueChanges(id, kv, sc, "done");
-        guardarTiempoEnKV(id, kv, sc, tiempoDeEjecucion)
+        await keyValueChanges(id, kv, sc, "done");
+        await guardarEnKV(id, kv, sc, tiempoDeEjecucion, stdout)
         // const natsQueue = 'jobs_Out';
         // nc.publish(natsQueue, sc.encode(JSON.stringify({
         //   id,
@@ -207,11 +207,12 @@ async function ejecutarC(scriptPath, id, kv, sc, os, nc) {
         //   time: tiempoDeEjecucion,
         // })));
         resolve(stdout);
+        return stdout
       }
     } catch (error) {
       console.error(`Error al ejecutar el código C: ${error.message}`);
       await guardarEnOS(id, os, sc, error.message);
-      keyValueChanges(id, kv, sc, "error");
+      await keyValueChanges(id, kv, sc, "error");
       reject(error);
     }
   });
@@ -248,8 +249,10 @@ async function keyValueChanges(id, kv, sc, estadoParam) {
     let existingState = JSON.parse(sc.decode(data.value))
     
     existingState.STATE = estadoParam
+    console.log(existingState)
     finalState = JSON.stringify(existingState)
     await kv.put(id, sc.encode(finalState))
+  
   }
 }
 
@@ -266,14 +269,19 @@ async function guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion) {
   }
 }
 
-async function guardarTiempoEnKV(id, kv, sc, tiempo) {
+async function guardarEnKV(id, kv, sc, tiempo, stdout) {
   try {
     let estado = await kv.get(id);
     
     const dataJSON = JSON.parse(sc.decode(estado.value))
-    dataJSON.Tiempo = tiempo
-    finalState = JSON.stringify(dataJSON)
+    dataJSON.TIME = tiempo
+    dataJSON.RESULTS = stdout
+    const finalState = JSON.stringify(dataJSON)
     await kv.put(id, sc.encode(finalState))
+    console.log(finalState)
+    // Introducir un pequeño retraso antes de la siguiente operación
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     
   } catch (error) {
     console.error(`Error al leer o guardar el archivo: ${error.message}`);
@@ -282,9 +290,7 @@ async function guardarTiempoEnKV(id, kv, sc, tiempo) {
 
 async function run() {
   const sc = StringCodec();  
-  //la tarea ya viene on queue
-  //Ajustar la URL a la configuracion del NATS mediante docker inspect nats-q
-  //crear cola para enviar resultados, ya no se guardan en KV
+  //docker inspect nats-q
   const natsUrl = '192.168.1.5';
   
   const nc = await connect({ servers: natsUrl });
@@ -295,16 +301,18 @@ async function run() {
   const sub = nc.subscribe('cola', {queue: groupName });
   // const res = nc.('jobs_out', {queue: groupName });
  
-  const os = await js.views.os("jobs_Out", { storage: StorageType.File });
- 
+  const os = await js.views.os("configs", { storage: StorageType.File });
+  
   (async () => {
     for await (const m of sub) {
+    
       let id= JSON.parse(sc.decode(m.data)).id
       await buscarDatos(id, kv, sc, os)
       extensionMain = obtenerExtension()
       await ejecutarScriptSegunExtension(extensionMain ,"main", id, kv, sc,os);
     }
   })();
+  
 }
 
 run().catch((err) => {

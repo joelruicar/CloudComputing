@@ -1,6 +1,6 @@
 const express = require("express");
 const { connect } = require('nats');
-const {createWork, kvUsers, createOStore} = require('../queue.js');
+const {createWork, kvUsers, returnWork, createOStore} = require('../queue.js');
 const routeApi = express.Router();  //creacion de variable para acceder a los metodos de Router de express
 
 routeApi.post('/job', async (req, res) => {
@@ -31,4 +31,16 @@ routeApi.get('/job/obsResults', async (req, res) => {
         }
 });
 
+routeApi.get('/job/:id', async (req, res) => {
+    const jobId = req.params.id;
+    try {
+        const jobData = await returnWork({ id: jobId });
+        res.json({ jobId, data: jobData });
+    } catch (error) {
+        console.error('Error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+  
 module.exports = routeApi;

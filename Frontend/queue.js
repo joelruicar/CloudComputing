@@ -17,7 +17,6 @@ const startCola = async () => {
     }
 }
 
-//Almacenamiento en el KV Storage para estados
 const createWork = async (body ={})  => {
   try {
     const sc = StringCodec();
@@ -25,6 +24,7 @@ const createWork = async (body ={})  => {
     currentId = body.id; 
     const value = JSON.stringify(body);
 
+    //Almacenamiento en el KV
     const js = natsConnection.jetstream(); 
     const kv = await js.views.kv("jobs_In");
     let status = await kv.status();
@@ -32,7 +32,9 @@ const createWork = async (body ={})  => {
     //Obtener trabajo asociado
     const jobData = {
         "URL": "https://github.com/joelruicar/basicC",
-        "STATE": "Done"
+        "STATE": "in_queue",
+        "RESULTS": "",
+        "TIME": ""
     };
 
     // Convertir a JSON
@@ -63,7 +65,21 @@ const createWork = async (body ={})  => {
   }
 }
 
-//Almacenamiento en el OStorage para resultados
+const returnWork = async (body = {}) => {
+  try {
+    const sc = StringCodec();
+    const currentId = body.id; 
+    const js = natsConnection.jetstream(); 
+    const kv = await js.views.kv("jobs_In");
+    let entry = await kv.get(currentId);
+    const jobData = JSON.parse(sc.decode(entry.value))
+    console.log(jobData, "aqui"); 
+    return jobData ;
+  } catch (error) {
+    throw new Error(`Error in returnWork: ${error.message}`);
+  }
+}
+
 const createOStore = async (body ={})  => {
   try {
       const js = natsConnection.jetstream(); 
@@ -117,6 +133,7 @@ const kvUsers = async (body ={})  => {
 module.exports = {
     startCola,
     createWork,
-    kvUsers,
+    kvUsers, 
+    returnWork,
     createOStore
 }
