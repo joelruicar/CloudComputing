@@ -31,7 +31,7 @@ const createWork = async (body = {}, username, user) => {
 
     //Obtener trabajo asociado
     const jobData = {
-      "URL": "https://github.com/joelruicar/basicC",
+      "URL": body.URL,
       "STATE": "in_queue",
       "RESULTS": "",
       "TIME": "",
