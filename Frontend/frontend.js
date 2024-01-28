@@ -17,7 +17,7 @@ app.use(express.urlencoded( {extended: false}));  //
 
 app.use ('/api', routeApi);
 
-app.get('/', (req,res) => {
+app.post('/', (req,res) => {
   res.send('Servidor FrontEnd');
 });
 

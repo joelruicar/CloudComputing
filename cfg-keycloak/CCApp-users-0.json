@@ -18,6 +18,27 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
+    "id" : "172ac48b-6713-473f-b1aa-57aad3c59067",
+    "createdTimestamp" : 1706455694353,
+    "username" : "useradmin",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : true,
+    "email" : "useradmin@example.upv.es",
+    "credentials" : [ {
+      "id" : "52c9330a-2ce2-4ac1-9a8d-287e7aa04291",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1706455720588,
+      "secretData" : "{\"value\":\"fDMY2uVphgOcxhzdBNkID3mEQvmtaHf4bjZq6nd7d1E=\",\"salt\":\"lUDq27oZA3sRtyUVUlY06A==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-ccapp" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "d4b4a98f-0937-4866-ac4a-d3c6412ac2ba",
     "createdTimestamp" : 1702915947318,
     "username" : "usercc",
@@ -33,6 +54,27 @@
       "userLabel" : "My password",
       "createdDate" : 1702915964268,
       "secretData" : "{\"value\":\"ulBhhEX8Z6MxqNgq0K+K35S1JLwssc6NiDOnz0zqmBs=\",\"salt\":\"mayc09uS5JCsxHFFBU1AIw==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-ccapp" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "96fc3ac4-cd0b-4e7b-a32c-296c3e39c570",
+    "createdTimestamp" : 1706455757155,
+    "username" : "usercc2",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : true,
+    "email" : "usercc2@example.upv.es",
+    "credentials" : [ {
+      "id" : "c9db4023-7dc0-4676-b2f3-2c690e789e02",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1706455766154,
+      "secretData" : "{\"value\":\"hjRlMzA1VRMk8Cpxs/uVSLqjNLMPk7F2xyf+Wk/seyA=\",\"salt\":\"Yn8ZQTpedZmrLf4kBDwDBg==\",\"additionalParameters\":{}}",
       "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
     } ],
     "disableableCredentialTypes" : [ ],

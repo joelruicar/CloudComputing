@@ -31,7 +31,7 @@ services:
     hostname: keycloak
     volumes:
       - "./cfg-keycloak/:/opt/keycloak/data/import:ro"
-      # - ./test:/test
+      # - ./test:/test # (Comando para exportar la configuracion dentro del contenedor) /opt/keycloak/bin/kc.sh export --dir /test --users different_files
     restart: always
     networks:
       ccnet:
@@ -86,7 +86,6 @@ services:
     depends_on:
       - nats
       - oauth2-proxy
-      - frontend
     networks:
       ccnet:
         ipv4_address: 192.168.1.6
