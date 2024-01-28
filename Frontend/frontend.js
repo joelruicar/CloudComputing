@@ -21,14 +21,14 @@ app.use('/api', routeApi);
 //   res.send('Servidor FrontEnd');
 // });
 
-app.post('/', (req, res) => {
+app.post('/', async (req, res) => {
   var welcome_json = {}
 
   welcome_json["message"] = "Acciones disponibles"
   welcome_json["routes"] = {}
 
   welcome_json["routes"]["/job"] = {}
-  welcome_json["routes"]["/job"]["body_params"] = "giturl: <url>"
+  welcome_json["routes"]["/job"]["body_params"] = "URL: <url>"
   welcome_json["routes"]["/job"]["description"] = "Crea un nuevo trabajo a partir de una URL. Devuelve la ID del trabajo"
 
   welcome_json["routes"]["/job/<id>"] = {}
@@ -42,6 +42,22 @@ app.post('/', (req, res) => {
   welcome_json["routes"]["/observer"] = {}
   welcome_json["routes"]["/observer"]["body_params"] = "none"
   welcome_json["routes"]["/observer"]["description"] = "Devuelve un registro de eventos producidos por el observer. Solo cuenta de adiminstrador"
+
+  try {
+    nc = await connect({ servers: "192.168.1.5" });
+  }
+  catch (error) {
+    console.log("NATS error", error);
+  }
+
+  try {
+    const js = nc.jetstream();
+    const kvUser = await js.views.kv("users");
+    await kvUser.create(username, sc.encode(user));
+    await nc.close();
+  } catch (err) {
+    // Si da error es que ya existe
+  }
 
   res.json(welcome_json);
 });
