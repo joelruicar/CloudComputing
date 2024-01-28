@@ -13,7 +13,7 @@ const util = require('util');
 const execAsync = util.promisify(require('child_process').exec);
 const { ReadableStream } = require('node:stream/web');
 
-async function buscarDatos(id, kv,sc, os) {
+async function buscarDatos(id, kv, sc, os) {
   rimraf.sync(destinationFolder);
 
   const data = await kv.get(id);
@@ -22,7 +22,7 @@ async function buscarDatos(id, kv,sc, os) {
     try {
       const dataJSON = JSON.parse(sc.decode(data.value))
       const url = dataJSON.URL
-      
+
       await execAsync(`git clone ${url} ${destinationFolder}`);
     } catch (error) {
       console.error(`Error: ${error.message}`);
@@ -30,9 +30,9 @@ async function buscarDatos(id, kv,sc, os) {
     }
   }
   else {
-      console.log("ID inválido")
-      await guardarEnOS(id, os, sc, "ID inválido")
-      await keyValueChanges(id, kv, sc, "error")
+    console.log("ID inválido")
+    await guardarEnOS(id, os, sc, "ID inválido")
+    await keyValueChanges(id, kv, sc, "error")
   }
 }
 
@@ -40,7 +40,7 @@ function obtenerExtension() {
   let extensionMain;
   for (const elem of fs.readdirSync(destinationFolder)) {
     const nombre = path.parse(elem).name;
-    const extension = path.parse(elem).ext.substr(1); 
+    const extension = path.parse(elem).ext.substr(1);
     if (nombre === 'main') {
       extensionMain = extension;
     }
@@ -48,15 +48,16 @@ function obtenerExtension() {
   return extensionMain
 }
 
-async function ejecutarScriptSegunExtension(extension, file, id, kv, sc, os, nc) {
+async function ejecutarScriptSegunExtension(extension, file, id, kv, sc, os) {
   switch (extension) {
     case 'py':
-      return ejecutarPython(file + "." + extension, id, kv, sc,os, nc);
+      return ejecutarPython(file + "." + extension, id, kv, sc, os);
     case 'cpp':
-      return ejecutarCPP(file+"."+extension, id, kv, sc,os, nc);
+      return ejecutarCPP(file + "." + extension, id, kv, sc, os);
     case 'c':
-    return ejecutarC(file+"."+extension, id, kv, sc,os, nc);
-      break;
+      return ejecutarC(file + "." + extension, id, kv, sc, os);
+    case 'sh':
+      return ejecutarSH(file + "." + extension, id, kv, sc, os);
     default:
       console.log(`Extensión no soportada: ${extension}`);
       await guardarEnOS(id, os, sc, `Extensión no soportada: ${extension}`)
@@ -65,7 +66,7 @@ async function ejecutarScriptSegunExtension(extension, file, id, kv, sc, os, nc)
   }
 }
 
-async function ejecutarPython(scriptPath, id, kv, sc, os, nc) {
+async function ejecutarPython(scriptPath, id, kv, sc, os) {
   return new Promise(async (resolve, reject) => {
     try {
       // Registrar el tiempo de inicio
@@ -78,30 +79,24 @@ async function ejecutarPython(scriptPath, id, kv, sc, os, nc) {
       const endTime = new Date();
 
       // Calcular la diferencia de tiempo en milisegundos
-      const tiempoDeEjecucion = endTime - startTime;
+      const tiempoDeEjecucion = (endTime - startTime) / 1000;
 
       if (stderr) {
         console.error(`Error al ejecutar el script de Python: ${stderr}`);
-        await guardarEnOS(id, os, sc, stderr, tiempoDeEjecucion);
+        await guardarEnOS(id, os, sc, stderr, tiempoDeEjecucion + "s");
         keyValueChanges(id, kv, sc, "error");
         reject(new Error(`Error al ejecutar el script de Python: ${stderr}`));
       } else {
         console.log(`Script de Python ejecutado correctamente: ${stdout}`);
-        
-        await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion);
+
+        await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion + "s");
         await keyValueChanges(id, kv, sc, "done");
-        await guardarEnKV(id, kv, sc, tiempoDeEjecucion, stdout)
-        // const natsQueue = 'jobs_Out';
-        nc.publish(natsQueue, sc.encode(JSON.stringify({
-          id,
-          result: stdout,
-          time: tiempoDeEjecucion,
-        })));
+        await guardarEnKV(id, kv, sc, tiempoDeEjecucion + "s", stdout)
         resolve(stdout);
       }
     } catch (error) {
       console.error(`Error al ejecutar el script de Python: ${error.message}`);
-      await guardarEnOS(id, os, sc, error, tiempoDeEjecucion);
+      await guardarEnOS(id, os, sc, error, tiempoDeEjecucion + "s");
       await keyValueChanges(id, kv, sc, "error");
       reject(error);
     }
@@ -109,7 +104,7 @@ async function ejecutarPython(scriptPath, id, kv, sc, os, nc) {
 }
 
 
-async function ejecutarCPP(scriptPath, id, kv, sc, os, nc) {
+async function ejecutarCPP(scriptPath, id, kv, sc, os) {
   return new Promise(async (resolve, reject) => {
     try {
       // Registrar el tiempo de inicio
@@ -133,25 +128,20 @@ async function ejecutarCPP(scriptPath, id, kv, sc, os, nc) {
       const endTime = new Date();
 
       // Calcular la diferencia de tiempo en milisegundos
-      const tiempoDeEjecucion = endTime - startTime;
+      const tiempoDeEjecucion = (endTime - startTime) / 1000;
 
       if (stderr) {
         console.error(`Error al ejecutar el código C++: ${stderr}`);
-        await guardarEnOS(id, os, sc, stderr, tiempoDeEjecucion);
+        await guardarEnOS(id, os, sc, stderr, tiempoDeEjecucion + "s");
         await keyValueChanges(id, kv, sc, "error");
         reject(new Error(`Error al ejecutar el código C++: ${stderr}`));
       } else {
         console.log(`Código C++ ejecutado correctamente: ${stdout}`);
-        
-        await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion);
+
+        await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion + "s");
         await keyValueChanges(id, kv, sc, "done");
-        await guardarEnKV(id, kv, sc, tiempoDeEjecucion, stdout)
-        const natsQueue = 'jobs_Out';
-        nc.publish(natsQueue, sc.encode(JSON.stringify({
-          id,
-          result: stdout,
-          time: tiempoDeEjecucion,
-        })));
+        await guardarEnKV(id, kv, sc, tiempoDeEjecucion + "s", stdout)
+
         resolve(stdout);
       }
     } catch (error) {
@@ -163,7 +153,45 @@ async function ejecutarCPP(scriptPath, id, kv, sc, os, nc) {
   });
 }
 
-async function ejecutarC(scriptPath, id, kv, sc, os, nc) {
+async function ejecutarSH(scriptPath, id, kv, sc, os) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Registrar el tiempo de inicio
+      const startTime = new Date();
+
+      const comando = `cd ${destinationFolder} && bash ${scriptPath} -o 'output'`;
+      const { stdout, stderr } = await execAsync(comando);
+
+      // Registrar el tiempo de finalización
+      const endTime = new Date();
+
+      // Calcular la diferencia de tiempo en milisegundos
+      const tiempoDeEjecucion = (endTime - startTime) / 1000;
+
+      if (stderr) {
+        console.error(`Error al ejecutar el sh: ${stderr}`);
+        await guardarEnOS(id, os, sc, stderr, tiempoDeEjecucion + "s");
+        await keyValueChanges(id, kv, sc, "error");
+        reject(new Error(`Error al ejecutar el sh: ${stderr}`));
+      } else {
+        console.log(`Código sh ejecutado correctamente: ${stdout}`);
+
+        await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion + "s");
+        await keyValueChanges(id, kv, sc, "done");
+        await guardarEnKV(id, kv, sc, tiempoDeEjecucion + "s", stdout)
+
+        resolve(stdout);
+      }
+    } catch (error) {
+      console.error(`Error al ejecutar el sh: ${error.message}`);
+      await guardarEnOS(id, os, sc, error.message);
+      await keyValueChanges(id, kv, sc, "error");
+      reject(error);
+    }
+  });
+}
+
+async function ejecutarC(scriptPath, id, kv, sc, os) {
   return new Promise(async (resolve, reject) => {
     try {
       // Registrar el tiempo de inicio
@@ -187,7 +215,7 @@ async function ejecutarC(scriptPath, id, kv, sc, os, nc) {
       const endTime = new Date();
 
       // Calcular la diferencia de tiempo en milisegundos
-      const tiempoDeEjecucion = endTime - startTime;
+      const tiempoDeEjecucion = (endTime - startTime) / 1000;
 
       if (stderr) {
         console.error(`Error al ejecutar el código C: ${stderr}`);
@@ -196,16 +224,11 @@ async function ejecutarC(scriptPath, id, kv, sc, os, nc) {
         reject(new Error(`Error al ejecutar el código C: ${stderr}`));
       } else {
         console.log(`Código C ejecutado correctamente: ${stdout}`);
-        
-        await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion);
+
+        await guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion + "s");
         await keyValueChanges(id, kv, sc, "done");
-        await guardarEnKV(id, kv, sc, tiempoDeEjecucion, stdout)
-        // const natsQueue = 'jobs_Out';
-        // nc.publish(natsQueue, sc.encode(JSON.stringify({
-        //   id,
-        //   result: stdout,
-        //   time: tiempoDeEjecucion,
-        // })));
+        await guardarEnKV(id, kv, sc, tiempoDeEjecucion + "s", stdout)
+
         resolve(stdout);
         return stdout
       }
@@ -242,17 +265,16 @@ async function fromReadableStream(ed, sc) {
   return result;
 }
 
-
 async function keyValueChanges(id, kv, sc, estadoParam) {
   let data = await kv.get(id);
   if (data) {
     let existingState = JSON.parse(sc.decode(data.value))
-    
+
     existingState.STATE = estadoParam
     console.log(existingState)
     finalState = JSON.stringify(existingState)
     await kv.put(id, sc.encode(finalState))
-  
+
   }
 }
 
@@ -260,10 +282,10 @@ async function guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion) {
   try {
     await os.put({
       name: id,
-    }, readableStreamFrom(sc.encode(JSON.stringify({'Resultado':stdout, 'Tiempo':tiempoDeEjecucion}))));
-  const estado = await os.get(id);
-  result = await fromReadableStream(estado.data, sc);
-  console.log(result)
+    }, readableStreamFrom(sc.encode(JSON.stringify({ 'Resultado': stdout, 'Tiempo': tiempoDeEjecucion + "s" }))));
+    const estado = await os.get(id);
+    result = await fromReadableStream(estado.data, sc);
+    console.log(result)
   } catch (error) {
     console.error(`Error al leer o guardar el archivo OS: ${error.message}`);
   }
@@ -272,7 +294,7 @@ async function guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion) {
 async function guardarEnKV(id, kv, sc, tiempo, stdout) {
   try {
     let estado = await kv.get(id);
-    
+
     const dataJSON = JSON.parse(sc.decode(estado.value))
     dataJSON.TIME = tiempo
     dataJSON.RESULTS = stdout
@@ -282,37 +304,37 @@ async function guardarEnKV(id, kv, sc, tiempo, stdout) {
     // Introducir un pequeño retraso antes de la siguiente operación
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    
+
   } catch (error) {
     console.error(`Error al leer o guardar el archivo: ${error.message}`);
   }
 }
 
 async function run() {
-  const sc = StringCodec();  
+  const sc = StringCodec();
   //docker inspect nats-q
   const natsUrl = '192.168.1.5';
-  
+
   const nc = await connect({ servers: natsUrl });
   const js = await nc.jetstream();
   const kv = await js.views.kv('jobs_In');
 
-  groupName  = 'group1'
-  const sub = nc.subscribe('cola', {queue: groupName });
+  groupName = 'group1'
+  const sub = nc.subscribe('cola', { queue: groupName });
   // const res = nc.('jobs_out', {queue: groupName });
- 
+
   const os = await js.views.os("configs", { storage: StorageType.File });
-  
+
   (async () => {
     for await (const m of sub) {
-    
-      let id= JSON.parse(sc.decode(m.data)).id
+
+      let id = JSON.parse(sc.decode(m.data)).id
       await buscarDatos(id, kv, sc, os)
       extensionMain = obtenerExtension()
-      await ejecutarScriptSegunExtension(extensionMain ,"main", id, kv, sc,os);
+      await ejecutarScriptSegunExtension(extensionMain, "main", id, kv, sc, os);
     }
   })();
-  
+
 }
 
 run().catch((err) => {
