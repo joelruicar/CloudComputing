@@ -11,7 +11,7 @@ WORKDIR /home/newuser
 RUN chown -R newuser:newuser /home/newuser
 
 # Copiar los archivos de configuración de la aplicación
-COPY --chown=newuser:newuser package*.json ./
+COPY --chown=newuser:newuser Workers/package*.json ./
 
 # Instalar dependencias de la aplicación y g++
 RUN  apk add --no-cache python3 && \
