@@ -19,7 +19,7 @@ RUN  apk add --no-cache python3 && \
     rm -rf /var/cache/apk/*
 
 # Copiar el código fuente de la aplicación
-COPY --chown=newuser:newuser . .
+COPY --chown=newuser:newuser Workers/. .
 
 # Instalar las dependencias de la aplicación
 RUN npm install
@@ -35,7 +35,7 @@ EXPOSE 8081
 USER newuser
 
 # Definir el comando para ejecutar la aplicación
-CMD [ "node", "app.js" ]
+CMD [ "npm", "start" ]
 
 
 # docker build -t worker .
