@@ -66,7 +66,7 @@ const createWork = async (body = {}, username, user) => {
 
     //Historico
 
-    return { jobId: currentId, stateData: jsonData };
+    return { jobId: currentId, stateData: jobData };
   }
 
   catch (error) {

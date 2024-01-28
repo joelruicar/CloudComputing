@@ -1,22 +1,28 @@
 const express = require("express");
 const { connect } = require('nats');
 const {createWork, kvUsers, returnWork, createOStore, returnAllWorks, observerRecords} = require('../queue.js');
-const routeApi = express.Router();  //creacion de variable para acceder a los metodos de Router de express
+const routeApi = express.Router();  
 
 routeApi.post('/job', async (req, res) => {
     const job = req.body;
+    var fe = {}
 
     try {
         const result = await createWork(job, req.headers["x-forwarded-preferred-username"], req.headers["x-forwarded-user"]);
         const jobId = result.jobId;
         const jsonData = result.stateData;
         
-        const Consulta = `Solicitud recibida, su ID de trabajo es: ${jobId}. Trabajo almacenado en el KeyValue Store y en cola NATS.`;
-        res.json({Consulta, stateData: jsonData});
+        fe["message"] = "RECEIVED WORK"
+        fe["resume"] = {}
+        fe["resume"]["information"] = {}
+        fe["resume"]["information"]["Work ID"] = `${jobId}.`;
+        fe["resume"]["information"]["NATS"] = "Work stored in the queue.";
+        fe["resume"]["information"]["Job description"] = jsonData;
 
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+    res.json(fe);
 });
 
 //(EN PRUEBA) Obtener resultados del OStorage
