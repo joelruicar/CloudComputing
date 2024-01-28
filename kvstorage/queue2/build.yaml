@@ -1,8 +1,0 @@
-version: '3'
-services: 
-  queue:
-    image: 'nats:2.7.0-alpine'
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    command: ["-js"]
