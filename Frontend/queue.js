@@ -110,6 +110,7 @@ const returnAllWorks = async (user) => {
       const jobData = JSON.parse(sc.decode(entry.value))
       if (jobData.OWNER == user) {
         delete jobData.OWNER;
+        jobData["ID"] = key
         array.push(jobData)
       }
     }

@@ -41,10 +41,46 @@ routeApi.post('/job/:id', async (req, res) => {
     const jobId = req.params.id;
     try {
         const jobData = await returnWork({ id: jobId });
-        if(jobData.OWNER == req.headers["x-forwarded-user"])
+        if(jobData.OWNER == req.headers["x-forwarded-user"]){
+            delete jobData.OWNER;
             res.json({ jobId, data: jobData });
+        }
         else
             res.json({ response: "You do not have the ownership over this job" });
+    } catch (error) {
+        console.error('Error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+routeApi.post('/job/:id/output', async (req, res) => {
+    const jobId = req.params.id;
+    try {
+        res.json({ response: "Placeholder devolucion output id: " + jobId });
+        // const jobData = await returnWork({ id: jobId });
+        // if(jobData.OWNER == req.headers["x-forwarded-user"]){
+        //     delete jobData.OWNER;
+        //     res.json({ jobId, data: jobData });
+        // }
+        // else
+        //     res.json({ response: "You do not have the ownership over this job" });
+    } catch (error) {
+        console.error('Error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+routeApi.post('/job/:id/error', async (req, res) => {
+    const jobId = req.params.id;
+    try {
+        res.json({ response: "Placeholder devolucion error id: " + jobId });
+        // const jobData = await returnWork({ id: jobId });
+        // if(jobData.OWNER == req.headers["x-forwarded-user"]){
+        //     delete jobData.OWNER;
+        //     res.json({ jobId, data: jobData });
+        // }
+        // else
+        //     res.json({ response: "You do not have the ownership over this job" });
     } catch (error) {
         console.error('Error:', error.message);
         res.status(500).json({ error: error.message });
