@@ -1,11 +1,9 @@
-//Librerias
 const express = require('express');
 const { connect } = require('nats');
-const { v4: uuidv4 } = require('uuid'); // Importar la función v4 de uuid para generar UUIDs
+const { v4: uuidv4 } = require('uuid'); 
 
-//Llamadas
 const { startCola } = require('./queue.js');
-const routeApi = require('./routes/route.js');  //se importa solamente uno.
+const routeApi = require('./routes/route.js'); 
 
 const app = express();
 const PORT = 3000;
@@ -16,10 +14,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));  //
 
 app.use('/api', routeApi);
-
-// app.post('/', (req,res) => {
-//   res.send('Servidor FrontEnd');
-// });
 
 app.post('/', async (req, res) => {
   var welcome_json = {}
@@ -66,5 +60,5 @@ startCola();
 
 // Iniciar el servidor
 app.listen(PORT, () => {
-  console.log(`FrontEnd escuchando en el puerto ${PORT}`);
+  console.log(`FrontEnd listening on port: ${PORT} \n`);
 });
