@@ -31,12 +31,18 @@ const createWork = async (body = {}, username, user) => {
     const os = await js.views.os("configs");
     let statusOBS = await os.status();
 
-    //Obtener trabajo asociado
+    //Esctructura del OB Store
     const jobData = {
       "URL": body.URL,
-      "STATE": "in_queue",
-      "RESULTS": "",
       "TIME": "",
+      "RESULTS": "",
+      "OWNER": user
+    };
+
+    //Estructura del KV Store
+    const jobDataKV = {
+      "URL": body.URL,
+      "STATE": "in_queue",
       "OWNER": user
     };
 
@@ -49,7 +55,8 @@ const createWork = async (body = {}, username, user) => {
     }
 
     // Convertir a JSON y luego a objeto Buffer
-    const jsonData = JSON.stringify(jobData); // > JSON
+    const jsonDataOB = JSON.stringify(jobData); // > JSON
+    const jsonData = JSON.stringify(jobDataKV); // > JSON
     const bufferData = Buffer.from(jsonData); // JSON > Buffer
 
     //Almacenamiento en el KV
@@ -64,7 +71,7 @@ const createWork = async (body = {}, username, user) => {
     console.log("> Data published in NATS:", "\n", JSON.parse(value), "\n");
 
     //Almacenamiento en el OBStorage
-    const bytes = new TextEncoder().encode(jsonData); // Convertir el JSON a Uint8Array
+    const bytes = new TextEncoder().encode(jsonDataOB); // Convertir el JSON a Uint8Array
     let data = new Uint8Array(bytes);
     let infoOB = await os.putBlob({ name: currentId, description: "Contenido" }, data);
     let entries = await os.list();

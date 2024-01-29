@@ -281,12 +281,8 @@ async function keyValueChanges(id, kv, sc, estadoParam) {
 async function guardarEnKV(id, kv, sc, tiempo, stdout) {
   try {
     let estado = await kv.get(id);
-    console.log('Contenido de la variable "id" en KV es:', estado);
-    console.log('La variable "id" del KV es de tipo: ', typeof estado)
 
     const dataJSON = JSON.parse(sc.decode(estado.value))
-    dataJSON.TIME = tiempo
-    dataJSON.RESULTS = stdout
     const finalState = JSON.stringify(dataJSON)
     await kv.put(id, sc.encode(finalState))
     console.log(finalState)
@@ -303,23 +299,22 @@ async function guardarEnOS(id, os, sc, tiempo, stdout) {
   try {
     let estado = await os.getBlob(id);
     let status = await os.status();
-    console.log('Contenido de la variable "id" en Object Storage es:', estado);
-    console.log('La variable "id" del OBStorage es de tipo: ', typeof estado)
 
-    const dataJSON = JSON.parse(sc.decode(binaryData.value))  //Decodifica el JSON
+    let dataString = sc.decode(estado); // Convertir el buffer a una cadena
+    let dataJSON = JSON.parse(dataString);  //Decodifica el JSON para manipularlo
     dataJSON.TIME = tiempo
     dataJSON.RESULTS = stdout
 
     const jsonData = JSON.stringify(dataJSON); // Convierto > JSON
-    console.log('Data obtained from the "id" stored in the OBStorage', jsonData); 
+    console.log('> Data stored in the OB Store: \n', jsonData);
     
     const bytes = new TextEncoder().encode(jsonData); // Convertir el JSON a Uint8Array
       let data = new Uint8Array(bytes);
 
       await os.putBlob({ name: id, description: "Contenido" }, data);
       console.log(
-        `Se agregó una nueva entrada para ${id} (${finalState.length} bytes).`,
-        `El Object Storage ahora tiene ${status.size} bytes.`
+        `Se agregó una nueva entrada para ${id} (${finalState.length} bytes).\n`,
+        `El Object Storage ahora ocupa: ${status.size} bytes.\n`
       );
 
     // Introducir un pequeño retraso antes de la siguiente operación
