@@ -1,13 +1,15 @@
 const { connect, StringCodec } = require('nats');
 const { v4: uuidv4 } = require('uuid');
 
+let natsConnection;
 let currentId;
 
 const startCola = async () => {
 
   try {
-    console.log("CONNECTED TO NATS");
+    console.log("Start connection NATS");
     natsConnection = await connect({ servers: "192.168.1.5" });
+    console.log("Connected to nats");
   }
 
   catch (error) {
@@ -22,14 +24,10 @@ const createWork = async (body = {}, username, user) => {
     currentId = body.id;
     const value = JSON.stringify(body);
 
-    //Configuracion del KV
+    //Almacenamiento en el KV
     const js = natsConnection.jetstream();
     const kv = await js.views.kv("jobs_In");
     let status = await kv.status();
-
-    //Configuracion del OBStorage
-    const os = await js.views.os("configs");
-    let statusOBS = await os.status();
 
     //Obtener trabajo asociado
     const jobData = {
@@ -48,34 +46,27 @@ const createWork = async (body = {}, username, user) => {
       // Si da error es que ya existe
     }
 
-    //Gestion de datos
-    const jsonData = JSON.stringify(jobData); // > JSON
-    const bufferData = Buffer.from(jsonData); // JSON > Buffer
+    // Convertir a JSON
+    const jsonData = JSON.stringify(jobData);
 
-    //Almacenamiento en el KV
+    // Convertir a objeto Buffer
+    const bufferData = Buffer.from(jsonData);
+
+    console.log("Trabajo almacenado en el KeyValue Store:", status.streamInfo.config.name, "\n");
+    //info =  await kv.put("kv.jobIn", body.id);
+    //let entry = await kv.get("kv.jobIn");
     info = await kv.put(currentId, bufferData);
     let entry = await kv.get(currentId);
-    console.log("Job Information:");
-    console.log("> Work stored in the KeyValue Store:", status.streamInfo.config.name);
+    console.log("Informacion del trabajo:");
     console.log(`${entry?.key} @ ${entry?.revision} -> ${entry?.string()}\n`);
 
-    //Almacenamiento en la Cola
+    //Trabajo publicado en la cola
     natsConnection.publish("cola", sc.encode(value));
-    console.log("> Data published in NATS:", "\n", JSON.parse(value), "\n");
+    console.log("Value published in NATS:", "\n", value);
 
-    //Almacenamiento en el OBStorage
-    const bytes = new TextEncoder().encode(jsonData); // Convertir el JSON a Uint8Array
-    let data = new Uint8Array(bytes);
-    let infoOB = await os.putBlob({ name: currentId, description: "Contenido" }, data);
-    let entries = await os.list();
-    console.log(`> The Object Store contains ${entries.length} entries`);
-    console.log(`Received work: ${infoOB.name} (${infoOB.size} bytes)- '${infoOB.description}'`,
-    );
-    console.log(`The bucket has ${statusOBS.size} bytes`);
-    console.log(`Client has a max payload of ${natsConnection.info?.max_payload} bytes \n`);
+    //Historico
 
-  return { infoOB, jobId: currentId, stateData: jobData };
-
+    return { jobId: currentId, stateData: jobData };
   }
 
   catch (error) {
@@ -91,7 +82,7 @@ const returnWork = async (body = {}) => {
     const kv = await js.views.kv("jobs_In");
     let entry = await kv.get(currentId);
     const jobData = JSON.parse(sc.decode(entry.value))
-    console.log("> Results stored in the KV: ", "\n", jobData, "\n");
+    console.log(jobData, "aqui");
     return jobData;
   } catch (error) {
     throw new Error(`Error in returnWork: ${error.message}`);
@@ -132,22 +123,33 @@ const returnAllWorks = async (user) => {
   }
 }
 
-const returnWorkOB = async (body = {}) => {
+const createOStore = async (body = {}) => {
   try {
-    const sc = StringCodec();
-    const currentId = body.id;
     const js = natsConnection.jetstream();
     const os = await js.views.os("configs");
-    let entry = await os.getBlob(currentId);
-    //console.log("returnWorkOB devuelve el id puro: ", entry); //id como Binario
-    //console.log("Contenido del id comom String es:", entry.toString());//id como String
+    let status = await os.status();
 
-    const jsonData = JSON.parse(entry.toString());
-    console.log("> Bucket in OB Storage:", jsonData, "\n");
+    const bytes = 10000000;
+    let data = new Uint8Array(bytes);
 
-    return jsonData;
-  } catch (error) {
-    throw new Error(`Error in return Work in OBS: ${error.message}`);
+    const sc = StringCodec();
+    body.id = uuidv4(); //Pasar ID de trabajo resultado
+    const value = JSON.stringify(body);
+
+    info = await os.put(
+      { name: "OB Resultados", description: "Bodega de resultados" }
+    );
+    console.log(
+      `added entry ${info.name} (${info.size} bytes)- '${info.description}'`,
+      `the object store has ${status.size} bytes`
+    );
+
+    const result = await os.get("OB Resultados");
+    console.log(`${result.info.name} has ${result.info.description} `);
+    return body.id;
+  }
+  catch (error) {
+    console.log(error);
   }
 }
 
@@ -217,6 +219,6 @@ module.exports = {
   kvUsers,
   returnWork,
   returnAllWorks,
-  returnWorkOB,
+  createOStore,
   observerRecords
 }

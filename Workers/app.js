@@ -278,11 +278,22 @@ async function keyValueChanges(id, kv, sc, estadoParam) {
   }
 }
 
+async function guardarEnOS(id, os, sc, stdout, tiempoDeEjecucion) {
+  try {
+    await os.put({
+      name: id,
+    }, readableStreamFrom(sc.encode(JSON.stringify({ 'Resultado': stdout, 'Tiempo': tiempoDeEjecucion + "s" }))));
+    const estado = await os.get(id);
+    result = await fromReadableStream(estado.data, sc);
+    console.log(result)
+  } catch (error) {
+    console.error(`Error al leer o guardar el archivo OS: ${error.message}`);
+  }
+}
+
 async function guardarEnKV(id, kv, sc, tiempo, stdout) {
   try {
     let estado = await kv.get(id);
-    console.log('Contenido de la variable "id" en KV es:', estado);
-    console.log('La variable "id" del KV es de tipo: ', typeof estado)
 
     const dataJSON = JSON.parse(sc.decode(estado.value))
     dataJSON.TIME = tiempo
@@ -299,38 +310,6 @@ async function guardarEnKV(id, kv, sc, tiempo, stdout) {
   }
 }
 
-async function guardarEnOS(id, os, sc, tiempo, stdout) {
-  try {
-    let estado = await os.getBlob(id);
-    let status = await os.status();
-    console.log('Contenido de la variable "id" en Object Storage es:', estado);
-    console.log('La variable "id" del OBStorage es de tipo: ', typeof estado)
-
-    const dataJSON = JSON.parse(sc.decode(binaryData.value))  //Decodifica el JSON
-    dataJSON.TIME = tiempo
-    dataJSON.RESULTS = stdout
-
-    const jsonData = JSON.stringify(dataJSON); // Convierto > JSON
-    console.log('Data obtained from the "id" stored in the OBStorage', jsonData); 
-    
-    const bytes = new TextEncoder().encode(jsonData); // Convertir el JSON a Uint8Array
-      let data = new Uint8Array(bytes);
-
-      await os.putBlob({ name: id, description: "Contenido" }, data);
-      console.log(
-        `Se agregó una nueva entrada para ${id} (${finalState.length} bytes).`,
-        `El Object Storage ahora tiene ${status.size} bytes.`
-      );
-
-    // Introducir un pequeño retraso antes de la siguiente operación
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-  } catch (error) {
-    console.error(`Error al guardar en el Object Storage: ${error.message}`);
-  }
-}
-
-
 async function run() {
   const sc = StringCodec();
   //docker inspect nats-q
@@ -339,13 +318,12 @@ async function run() {
   const nc = await connect({ servers: natsUrl });
   const js = await nc.jetstream();
   const kv = await js.views.kv('jobs_In');
-  const os = await js.views.os("configs");
 
   groupName = 'group1'
   const sub = nc.subscribe('cola', { queue: groupName });
   // const res = nc.('jobs_out', {queue: groupName });
 
-  
+  const os = await js.views.os("configs", { storage: StorageType.File });
 
   (async () => {
     for await (const m of sub) {
