@@ -331,6 +331,11 @@ async function guardarEnOS(id, os, sc, tiempo, stdout) {
 }
 
 
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function run() {
   const sc = StringCodec();
   //docker inspect nats-q
@@ -353,6 +358,7 @@ async function run() {
       await buscarDatos(id, kv, sc, os)
       extensionMain = obtenerExtension()
       await ejecutarScriptSegunExtension(extensionMain, "main", id, kv, sc, os);
+      await sleep(1000*10)
     }
   })();
 

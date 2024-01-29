@@ -89,8 +89,8 @@ services:
     networks:
       ccnet:
         ipv4_address: 192.168.1.6
-  worker:
-    container_name: worker
+  worker1:
+    container_name: worker1
     image: workernode
     build:
       dockerfile: Workers/Dockerfile
@@ -100,6 +100,17 @@ services:
     networks:
       ccnet:
         ipv4_address: 192.168.1.7
+  worker2:
+    container_name: worker2
+    image: workernode
+    build:
+      dockerfile: Workers/Dockerfile
+    restart: always
+    depends_on:
+      - frontend
+    networks:
+      ccnet:
+        ipv4_address: 192.168.1.8
 
 networks:
   ccnet:
