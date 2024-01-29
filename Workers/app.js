@@ -353,7 +353,6 @@ async function run() {
       await buscarDatos(id, kv, sc, os)
       extensionMain = obtenerExtension()
       await ejecutarScriptSegunExtension(extensionMain, "main", id, kv, sc, os);
-      await sleep(1000*10)
     }
   })();
 
