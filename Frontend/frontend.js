@@ -39,7 +39,7 @@ app.post('/', async (req, res) => {
 
   welcome_json["routes"]["/observer"] = {}
   welcome_json["routes"]["/observer"]["body_params"] = "none"
-  welcome_json["routes"]["/observer"]["description"] = "Devuelve un registro de eventos producidos por el observer. Solo cuenta de adiminstrador"
+  welcome_json["routes"]["/observer"]["description"] = "Devuelve un registro de eventos producidos por el observer. Solo cuenta de administrador"
 
   try {
     nc = await connect({ servers: "192.168.1.5" });

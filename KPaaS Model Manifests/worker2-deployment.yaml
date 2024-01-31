@@ -5,13 +5,13 @@ metadata:
     kompose.cmd: kompose convert
     kompose.version: 1.32.0 (765fde254)
   labels:
-    io.kompose.service: frontend
-  name: frontend
+    io.kompose.service: worker2
+  name: worker2
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: frontend
+      io.kompose.service: worker2
   template:
     metadata:
       annotations:
@@ -19,9 +19,9 @@ spec:
         kompose.version: 1.32.0 (765fde254)
       labels:
         io.kompose.network/cloudcomputing-ccnet: "true"
-        io.kompose.service: frontend
+        io.kompose.service: worker2
     spec:
       containers:
-        - image: frontendnode
-          name: frontend
+        - image: workernode
+          name: worker2
       restartPolicy: Always

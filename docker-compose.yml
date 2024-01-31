@@ -36,19 +36,6 @@ services:
     networks:
       ccnet:
         ipv4_address: 192.168.1.3
-  # nodejson:
-  #   container_name: nodejson
-  #   image: customnode
-  #   build:
-  #     dockerfile: node.Dockerfile
-  #   restart: always
-  #   expose:
-  #     - "3000"
-  #   ports:
-  #     - 3000:3000
-  #   networks:
-  #     ccnet:
-  #       ipv4_address: 192.168.1.4
   frontend:
     container_name: frontend
     image: frontendnode
@@ -58,22 +45,14 @@ services:
     depends_on:
       - nats
       - oauth2-proxy
-    expose:
-      - "3000"
-    ports:
-      - 3000:3000
     networks:
       ccnet:
         ipv4_address: 192.168.1.4
   nats:
     container_name: nats
     image: 'nats:2.10.9'
-    command: -js -m 8222
+    command: -js
     restart: always
-    ports:
-      - 4222:4222
-      - 6222:6222
-      - 8222:8222
     networks:
       ccnet:
         ipv4_address: 192.168.1.5
