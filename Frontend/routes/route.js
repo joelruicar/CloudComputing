@@ -12,6 +12,7 @@ routeApi.post('/job', async (req, res) => {
         const result = await createWork(job, req.headers["x-forwarded-preferred-username"], req.headers["x-forwarded-user"]);
         const jobId = result.jobId;
         const jsonData = result.stateData;
+        delete jsonData.OWNER;
         
         fe["message"] = "RECEIVED WORK"
         fe["resume"] = {}
@@ -32,8 +33,10 @@ routeApi.post('/job/obs/:id', async (req, res) => {
     try {
         
         const jobData = await returnWorkOB({ id: jobId });
-        if(jobData.OWNER == req.headers["x-forwarded-user"])
+        if(jobData.OWNER == req.headers["x-forwarded-user"]){
+            delete jobData.OWNER;
             res.json({ jobId, data: jobData });
+        }
         else
             res.json({ response: "[OB Storage]You do not have the ownership over this job." });
     } catch (error) {
@@ -53,40 +56,6 @@ routeApi.post('/job/:id', async (req, res) => {
         }
         else
             res.json({ response: "[KV Store]You do not have the ownership over this job" });
-    } catch (error) {
-        console.error('Error:', error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-routeApi.post('/job/:id/output', async (req, res) => {
-    const jobId = req.params.id;
-    try {
-        res.json({ response: "Placeholder devolucion output id: " + jobId });
-        // const jobData = await returnWork({ id: jobId });
-        // if(jobData.OWNER == req.headers["x-forwarded-user"]){
-        //     delete jobData.OWNER;
-        //     res.json({ jobId, data: jobData });
-        // }
-        // else
-        //     res.json({ response: "You do not have the ownership over this job" });
-    } catch (error) {
-        console.error('Error:', error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-routeApi.post('/job/:id/error', async (req, res) => {
-    const jobId = req.params.id;
-    try {
-        res.json({ response: "Placeholder devolucion error id: " + jobId });
-        // const jobData = await returnWork({ id: jobId });
-        // if(jobData.OWNER == req.headers["x-forwarded-user"]){
-        //     delete jobData.OWNER;
-        //     res.json({ jobId, data: jobData });
-        // }
-        // else
-        //     res.json({ response: "You do not have the ownership over this job" });
     } catch (error) {
         console.error('Error:', error.message);
         res.status(500).json({ error: error.message });

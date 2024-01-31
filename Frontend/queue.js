@@ -81,7 +81,7 @@ const createWork = async (body = {}, username, user) => {
     console.log(`The bucket has ${statusOBS.size} bytes`);
     console.log(`Client has a max payload of ${natsConnection.info?.max_payload} bytes \n`);
 
-  return { infoOB, jobId: currentId, stateData: jobData };
+  return { infoOB, jobId: currentId, stateData: jobDataKV };
 
   }
 

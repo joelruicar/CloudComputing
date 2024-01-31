@@ -21,17 +21,21 @@ app.post('/', async (req, res) => {
   welcome_json["message"] = "Acciones disponibles"
   welcome_json["routes"] = {}
 
-  welcome_json["routes"]["/job"] = {}
-  welcome_json["routes"]["/job"]["body_params"] = "URL: <url>"
-  welcome_json["routes"]["/job"]["description"] = "Crea un nuevo trabajo a partir de una URL. Devuelve la ID del trabajo"
+  welcome_json["routes"]["/api/job"] = {}
+  welcome_json["routes"]["/api/job"]["body_params"] = "URL: <url>"
+  welcome_json["routes"]["/api/job"]["description"] = "Crea un nuevo trabajo a partir de una URL. Devuelve la ID del trabajo"
 
-  welcome_json["routes"]["/job/<id>"] = {}
-  welcome_json["routes"]["/job/<id>"]["body_params"] = "none"
-  welcome_json["routes"]["/job/<id>"]["description"] = "Devuelve el estado de trabajo enviado por el mismo usuario (estado, tiempo de ejecucion...)"
+  welcome_json["routes"]["/api/job/<id>"] = {}
+  welcome_json["routes"]["/api/job/<id>"]["body_params"] = "none"
+  welcome_json["routes"]["/api/job/<id>"]["description"] = "Devuelve el estado del trabajo enviado por el mismo usuario"
 
-  welcome_json["routes"]["/jobs"] = {}
-  welcome_json["routes"]["/jobs"]["body_params"] = "none"
-  welcome_json["routes"]["/jobs"]["description"] = "Devuelve el estado de todos los trabajos pertenecientes al usuario"
+  welcome_json["routes"]["/api/job/obs/<id>"] = {}
+  welcome_json["routes"]["/api/job/obs/<id>"]["body_params"] = "none"
+  welcome_json["routes"]["/api/job/obs/<id>"]["description"] = "Devuelve el resultado del trabajo enviado por el mismo usuario"
+
+  welcome_json["routes"]["/api/jobs"] = {}
+  welcome_json["routes"]["/api/jobs"]["body_params"] = "none"
+  welcome_json["routes"]["/api/jobs"]["description"] = "Devuelve el estado de todos los trabajos pertenecientes al usuario"
 
   welcome_json["routes"]["/observer"] = {}
   welcome_json["routes"]["/observer"]["body_params"] = "none"
