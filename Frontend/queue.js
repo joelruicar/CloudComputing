@@ -201,7 +201,6 @@ const observerRecords = async (user) => {
 module.exports = {
   startCola,
   createWork,
-  kvUsers,
   returnWork,
   returnAllWorks,
   returnWorkOB,
