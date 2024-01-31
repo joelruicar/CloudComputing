@@ -87,6 +87,7 @@ const createWork = async (body = {}, username, user) => {
 
   catch (error) {
     console.log("Error NATS", error);
+    return { error: error };
   }
 }
 
