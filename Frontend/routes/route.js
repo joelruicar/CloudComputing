@@ -75,8 +75,8 @@ routeApi.post('/jobs', async (req, res) => {
 
 routeApi.post('/observer', async (req, res) => {
     try {
-        const jobsData = await observerRecords(req.headers["x-forwarded-user"]);
-        res.json({ jobs: jobsData });
+        const observerData = await observerRecords(req.headers["x-forwarded-user"]);
+        res.json({ logs: observerData });
     } catch (error) {
         console.error('Error:', error.message);
         res.status(500).json({ error: error.message });
