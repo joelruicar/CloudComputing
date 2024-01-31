@@ -9,7 +9,7 @@
 
 </center>
 
-<img src="E:\1. MAESTRIA 9122023\4. Cloud Computing\ProyectoGit\CloudComputing\repositorio\Faas.png" align="right" height="124px"/>
+<img src="https://github.com/joelruicar/CloudComputing/blob/main/repositorio/Faas.png?raw=true" align="right" height="124px"/>
 
 
 
@@ -31,7 +31,7 @@
  
  <center>
  
-<img src="E:\1. MAESTRIA 9122023\4. Cloud Computing\ProyectoGit\CloudComputing\repositorio\diagrama.png"/>
+<img src="https://github.com/joelruicar/CloudComputing/blob/main/repositorio/diagrama.png?raw=true"/>
 
 </center>
 
@@ -41,7 +41,7 @@
 
  <center>
  
-<img src="E:\1. MAESTRIA 9122023\4. Cloud Computing\ProyectoGit\CloudComputing\repositorio\autenticacion.png"/>
+<img src="https://github.com/joelruicar/CloudComputing/blob/main/repositorio/autenticacion.png?raw=true"/>
 
  </center>
 
@@ -56,7 +56,7 @@
 
 
  <center>
-<img src="E:\1. MAESTRIA 9122023\4. Cloud Computing\ProyectoGit\CloudComputing\repositorio\frontend.png"/>
+<img src="https://github.com/joelruicar/CloudComputing/blob/main/repositorio/frontend.png?raw=true"/>
  </center>
 
 
@@ -64,13 +64,13 @@
 | Script  | Path | Descripción |
 | ---------- | --------| ---------------| 
 | route.js  | Frontend/routes/route.js| Define un conjunto de endpoints que requiere el frontend utilizando Express.| 
-|frontend.js|Frontend/frontend.js | Funcionalidad principal permitir la interacción del usuario con el backend para la petición y consulta de trabajos.
+|frontend.js|Frontend/frontend.js | Permite la interacción del usuario con el backend para la petición y consulta de trabajos.
 
 
 ### Servicios NATs
 
  <center>
-<img src="E:\1. MAESTRIA 9122023\4. Cloud Computing\ProyectoGit\CloudComputing\repositorio\queue.png"/>
+<img src="https://github.com/joelruicar/CloudComputing/blob/main/repositorio/queue.png?raw=true"/>
  </center>
 
 | Script  | Path | Descripción |
@@ -81,7 +81,7 @@
 ###  Worker
 
  <center>
-<img src="E:\1. MAESTRIA 9122023\4. Cloud Computing\ProyectoGit\CloudComputing\repositorio\worker.png"/>
+<img src="https://github.com/joelruicar/CloudComputing/blob/main/repositorio/worker.png?raw=true"/>
  </center>
  
 
@@ -98,7 +98,7 @@
 
 <center>
 
-<img src="E:\1. MAESTRIA 9122023\4. Cloud Computing\ProyectoGit\CloudComputing\repositorio\observer.png"/>
+<img src="https://github.com/joelruicar/CloudComputing/blob/main/repositorio/observer.png?raw=true"/>
 
 </center>
 
