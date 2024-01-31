@@ -14,10 +14,10 @@
 
 
 ## Integrantes
-* Roberto Alfonso Ruiz
-* Joel Ruiz Carrillo
-* Juan Camilo Jojoa Sanchez
-* Lizet Valeria Chamorro Hernández
+* Roberto Alfonso Ruiz (Supergrefu)
+* Joel Ruiz Carrillo (Joel)(Joel L. Ruiz Carrillo)
+* Juan Camilo Jojoa Sanchez (juanCCloud)
+* Lizet Valeria Chamorro Hernández (LizetChamorro)
 
 ---
  
