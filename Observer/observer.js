@@ -17,8 +17,6 @@ async function observer() {
     var counter_max = 0
     var counter_min = 0
 
-    var myObj = { foo: 0, foo2: 0};
-
     const nc = await connect({ servers: nats_hostname });
     console.log(`connected to ${nc.getServer()}`);
 
@@ -62,25 +60,24 @@ async function observer() {
         }
 
         if (counter_max >= COUNTER_MAX_ALERT) {
-            console.log("QUEUE MAXIMUM LIMIT EXCEEDED! SCALE UP ACTIONS NEEDED")
+            console.log("QUEUE MAXIMUM LIMIT EXCEEDED! SCALE OUT ACTIONS NEEDED")
             try {
-                await kv.create(fecha, sc.encode("QUEUE MAXIMUM LIMIT EXCEEDED! SCALE UP ACTIONS NEEDED"));
+                await kv.create(fecha, sc.encode("QUEUE MAXIMUM LIMIT EXCEEDED! SCALE OUT ACTIONS NEEDED"));
             } catch (err) {
                 console.log("Error on KV entry creation")
             }
         }
 
         if (counter_min >= COUNTER_MIN_ALERT) {
-            console.log("QUEUE MINIMUM LIMIT MET! SCALE DOWN ACTIONS SUGGESTED")
+            console.log("QUEUE MINIMUM LIMIT MET! SCALE IN ACTIONS SUGGESTED")
             try {
-                await kv.create(fecha, sc.encode("QUEUE MINIMUM LIMIT MET! SCALE DOWN ACTIONS SUGGESTED"));
+                await kv.create(fecha, sc.encode("QUEUE MINIMUM LIMIT MET! SCALE IN ACTIONS SUGGESTED"));
             } catch (err) {
                 console.log("Error on KV entry creation")
             }
         }
 
         await sleep(MINUTES * MS_TO_MIN)
-        // await sleep(1000)
     }
 }
 
