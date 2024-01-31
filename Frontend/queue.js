@@ -148,8 +148,6 @@ const returnWorkOB = async (body = {}) => {
     const js = natsConnection.jetstream();
     const os = await js.views.os("configs");
     let entry = await os.getBlob(currentId);
-    //console.log("returnWorkOB devuelve el id puro: ", entry); //id como Binario
-    //console.log("Contenido del id comom String es:", entry.toString());//id como String
 
     const jsonData = JSON.parse(entry.toString());
     console.log("> Bucket in OB Storage:", jsonData, "\n");
@@ -157,27 +155,6 @@ const returnWorkOB = async (body = {}) => {
     return jsonData;
   } catch (error) {
     throw new Error(`Error in return Work in OBS: ${error.message}`);
-  }
-}
-
-
-
-//(EN PRUEBA) Creacion de KV para usuarios
-const kvUsers = async (body = {}) => {
-  try {
-    const js = natsConnection.jetstream(); // L.  instancia de JetStream.
-    const kv = await js.views.kv("User_list");
-    let status = await kv.status();
-
-    console.log("Usuario almacenado en la base de datos:", status.streamInfo.config.name);
-    info = await kv.put("kv.email", currentId);
-    let entry = await kv.get("kv.email");
-    console.log(`${entry?.key} @ ${entry?.revision} -> ${entry?.string()}`);
-
-    return currentId;
-  }
-  catch (error) {
-    console.log(error);
   }
 }
 

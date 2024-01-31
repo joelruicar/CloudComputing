@@ -11,7 +11,7 @@ const PORT = 3000;
 const NATS_URL = 'nats://192.168.1.5:4222';
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));  //
+app.use(express.urlencoded({ extended: false }));  
 
 app.use('/api', routeApi);
 
@@ -54,15 +54,13 @@ app.post('/', async (req, res) => {
     await kvUser.create(username, sc.encode(user));
     await nc.close();
   } catch (err) {
-    // Si da error es que ya existe
-  }
+    }
 
   res.json(welcome_json);
 });
 
 startCola();
 
-// Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`FrontEnd listening on port: ${PORT} \n`);
 });
